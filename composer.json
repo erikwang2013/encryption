@@ -1,6 +1,6 @@
 {
     "name": "erikwang2013/encryption",
-    "description": "对称/非对称/哈希/密钥派生统一契约与注册表，含 AES/Sodium、国密 SM2/SM3/SM4/ZUC、HKDF/PBKDF2。无框架耦合，适用于 Laravel 7–11、ThinkPHP 6/8、Hyperf 2/3、webman 1/2（需 PHP 8.1+）",
+    "description": "A pluggable cryptography component library: under a unified contract it provides symmetric encryption, asymmetric encryption, hashing, and key derivation (HKDF / PBKDF2), with implementations including AES/Sodium and Chinese national algorithms SM2/SM3/SM4/ZUC. Installable via Composer.",
     "keywords": [
         "encryption",
         "sm2",

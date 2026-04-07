@@ -2,6 +2,19 @@
 
 可插拔密码学组件库：在统一契约下提供**对称加密**、**非对称加密**、**哈希**、**密钥派生**（HKDF / PBKDF2），并包含 AES/Sodium、国密 SM2/SM3/SM4/ZUC 等实现，支持 Composer 安装。
 
+## 框架兼容性
+
+本库**不依赖**任何 Web 框架，仅以 Composer 包形式提供类与自动加载；在业务项目中 `composer require erikwang2013/encryption` 即可，与路由、容器、配置方式无关。
+
+前提为 **PHP ≥ 8.1** 且满足下文「环境要求」中的扩展与依赖。在此前提下，下列框架版本均可使用（与框架自带加密组件并行，按需注入 `EncryptionManager` 等即可）：
+
+| 框架 | 说明 |
+|------|------|
+| **Laravel** 7 / 8 / 9 / 10 / 11 | 在 **PHP 8.1+** 的运行环境中安装；Laravel 7 若仍停留在 PHP 7.x 或仅 8.0，则无法满足本库 PHP 约束，需先升级运行环境。 |
+| **ThinkPHP** 6 / 8 | 在 TP 应用的标准 `composer.json` 中 `require` 本包即可。 |
+| **Hyperf** 2 / 3 | 在 Hyperf 服务的 `composer.json` 中引入；按 Hyperf 习惯可在 `config` 或工厂类中注册单例。 |
+| **webman** 1 / 2 | 在 webman 项目根目录执行 `composer require`，在业务类或 `support` 辅助函数中直接使用。 |
+
 ## 架构概览
 
 按能力划分为四类契约，每类对应独立注册表与可选门面（`*Manager`），便于组合与单元测试。
@@ -57,7 +70,7 @@ flowchart TB
 
 | 项目 | 说明 |
 |------|------|
-| PHP | `^8.1` |
+| PHP | `^8.1`（与上述框架组合时，以本约束为准） |
 | 扩展 | `ext-openssl`（必需） |
 | 扩展 | `ext-sodium`（可选，用于 `sodium-xchacha20`） |
 | 扩展 | `ext-gmp`（可选，**SM2** 加解密与密钥生成） |

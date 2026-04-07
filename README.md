@@ -2,6 +2,24 @@
 
 可插拔密码学组件库：在统一契约下提供**对称加密**、**非对称加密**、**哈希**、**密钥派生**（HKDF / PBKDF2），并包含 AES/Sodium、国密 SM2/SM3/SM4/ZUC 等实现，支持 Composer 安装。
 
+## 目录
+
+- [框架兼容性](#框架兼容性)
+- [各框架接入方式](#各框架接入方式)
+- [快速开始](#快速开始)
+- [架构概览](#架构概览)
+- [环境要求](#环境要求)
+- [安装](#安装)
+- [内置算法与标识](#内置算法与标识)
+- [使用说明](#使用说明)
+- [包结构](#包结构)
+- [常见问题](#常见问题)
+- [安全建议](#安全建议)
+- [运行单元测试](#运行单元测试)
+- [许可证](#许可证)
+
+---
+
 ## 框架兼容性
 
 本库**不依赖**任何 Web 框架，仅以 Composer 包形式提供类与自动加载；在业务项目中 `composer require erikwang2013/encryption` 即可，与路由、容器、配置方式无关。
@@ -14,6 +32,83 @@
 | **ThinkPHP** 6 / 8 | 在 TP 应用的标准 `composer.json` 中 `require` 本包即可。 |
 | **Hyperf** 2 / 3 | 在 Hyperf 服务的 `composer.json` 中引入；按 Hyperf 习惯可在 `config` 或工厂类中注册单例。 |
 | **webman** 1 / 2 | 在 webman 项目根目录执行 `composer require`，在业务类或 `support` 辅助函数中直接使用。 |
+
+### 各框架接入方式
+
+本库**不提供** Laravel ServiceProvider、ThinkPHP 行为扩展等专用封装；接入方式是在各框架的**依赖注入容器**或**单例工厂**中注册 `EncryptionManager`（或其它 Manager），由配置或环境变量提供主密钥（32 字节）后再构造实例。下文为最小示例，**密钥来源请按你方安全规范**（`.env`、KMS、配置中心等），勿直接写死在代码里。
+
+**Laravel（`App\Providers\AppServiceProvider` 或独立 ServiceProvider）**
+
+```php
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+public function register(): void
+{
+    $this->app->singleton(\Erikwang2013\Encryption\EncryptionManager::class, function () {
+        $raw = config('app.custom_master_key'); // 例如 base64 存 32 字节
+        $master = is_string($raw) ? base64_decode($raw, true) : '';
+        if ($master === false || strlen($master) !== 32) {
+            throw new \RuntimeException('Invalid 32-byte master key.');
+        }
+        return EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm');
+    });
+}
+```
+
+容器解析：`app(\Erikwang2013\Encryption\EncryptionManager::class)`。与 Laravel 自带的 `Crypt` / `encrypt()` **互不替代**：前者用于字段级、多算法注册表场景；后者用于框架序列化与 Cookie 等。
+
+**ThinkPHP 6 / 8（服务类或 `common.php` 中工厂函数）**
+
+```php
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+function app_encryption_manager(): \Erikwang2013\Encryption\EncryptionManager
+{
+    static $mgr = null;
+    if ($mgr === null) {
+        $master = base64_decode(config('app.master_key'), true);
+        $mgr = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm');
+    }
+    return $mgr;
+}
+```
+
+也可在 `app\service` 下定义 `EncryptionService` 并在控制器中注入，便于单测 Mock。
+
+**Hyperf 2 / 3（`config/autoload/dependencies.php` 或注解工厂）**
+
+```php
+use Erikwang2013\Encryption\EncryptionManager;
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+return [
+    EncryptionManager::class => function () {
+        $master = base64_decode((string) config('encryption.master_key'), true);
+        return EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm');
+    },
+];
+```
+
+注意协程环境下若密钥来自远程配置，缓存解析结果即可。
+
+**webman 1 / 2**
+
+在 `config/plugin.php` / 自定义 `bootstrap` 或 `support/bootstrap.php` 中把 `EncryptionManager` 挂到全局 `support` 容器（若使用），或直接在需要的服务类构造函数里用 `EncryptionManagerFactory::fromMasterKey(...)` 构造；webman 无强制容器约定，**以项目现有组织方式为准**。
+
+### 与本库无关的说明
+
+- 框架版本升级（如 Laravel 10 → 11）一般**不需要**改本库 API；若 Composer 提示 PHP 版本冲突，以本库 `composer.json` 中 `php` 约束为准。
+- 国密 **SM2** 需 **`ext-gmp`**；未安装时相关类在运行时会失败，与框架种类无关。
+
+---
+
+## 快速开始
+
+1. 在业务项目根目录执行：`composer require erikwang2013/encryption:^1.0`（或你发布的版本约束）。
+2. 确认 `php -v` 为 **8.1+**，且已启用 `openssl`；若使用 `sodium-xchacha20` 或 SM2，按需安装 `sodium`、`gmp` 扩展。
+3. 在代码中 `use Erikwang2013\Encryption\...`，按下文「使用说明」选择 `EncryptionManager`、哈希或 KDF 等类即可。
+
+---
 
 ## 架构概览
 
@@ -276,6 +371,44 @@ SM1、SM7、SM9：`UnavailableNationalAlgorithms::sm1()` 等会抛出 `Unsupport
 
 ---
 
+## 包结构
+
+| 路径 | 说明 |
+|------|------|
+| `src/Contract/` | 各类能力接口（`EncryptorInterface`、`HasherInterface` 等） |
+| `src/Encryptor/`、`src/Asymmetric/`、`src/Hash/`、`src/Kdf/` | 具体算法实现 |
+| `src/Guomi/` | 国密相关实现与 `UnavailableNationalAlgorithms` |
+| `src/Exception/` | `EncryptionException` 等 |
+| `*Registry.php`、`*Manager.php`、`EncryptionManagerFactory.php` | 注册表与门面、主密钥工厂 |
+
+命名空间前缀：`Erikwang2013\Encryption\`，与 Composer `psr-4` 一致。
+
+---
+
+## 常见问题
+
+**Composer 提示 PHP 版本不满足**
+
+本库要求 `php ^8.1`。若业务项目仍使用 PHP 8.0 或更低，需先升级运行环境，或勿使用本包。
+
+**`sodium-xchacha20` 不可用**
+
+安装并启用 PHP 扩展 `sodium`（`ext-sodium`）。未启用时 `EncryptionManagerFactory::fromMasterKey(..., 'sodium-xchacha20')` 会报错，可改用默认 `aes-256-gcm`。
+
+**SM2 报错或无法生成密钥**
+
+安装并启用 **`ext-gmp`**。SM2 依赖大数运算，无 GMP 时无法保证完整功能。
+
+**密文要存数据库 / JSON**
+
+二进制字段可直接存 `BLOB`；若只能存文本，对密文与 IV 等做 **`base64_encode`**，解密前再 `base64_decode`。
+
+**与 Laravel `encrypt()` / `Crypt` 的区别**
+
+Laravel 封装主要用于框架内序列化与 Cookie 等；本库面向**显式算法标识、多注册表、国密与 HKDF/PBKDF2** 等场景，二者可并存，不要混用同一密钥约定除非你自己对齐格式。
+
+---
+
 ## 安全建议
 
 1. **密钥**：高熵密钥使用 `random_bytes()` 或 KMS；口令必须先经 **PBKDF2 / Argon2** 等派生，勿直接作为 AES 密钥。
@@ -287,16 +420,14 @@ SM1、SM7、SM9：`UnavailableNationalAlgorithms::sm1()` 等会抛出 `Unsupport
 
 ## 运行单元测试
 
+克隆本仓库后：
+
 ```bash
 composer install
 composer test
 ```
 
-或：
-
-```bash
-./vendor/bin/phpunit
-```
+等价于执行 `./vendor/bin/phpunit tests/`。若已为项目添加 `phpunit.xml`，可将 `composer.json` 中 `test` 脚本改为使用配置文件。
 
 ---
 

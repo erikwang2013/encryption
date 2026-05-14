@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+/*
+ * Copyright (c) 2026 erik <erik@erik.xyz> — https://erik.xyz
+ */
+
 namespace Erikwang2013\Encryption\Guomi;
 
 use Erikwang2013\Encryption\Contract\EncryptorInterface;
@@ -9,12 +13,14 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Internal\ZucEngine;
 
 /**
- * ZUC-128 流密码：载荷格式 v1 | IV(16) | 密文（与密钥流 XOR）。
+ * ZUC-128 流密码 + HMAC-SHA256（encrypt-then-mac）：载荷格式 v1 | IV(16) | MAC(32) | 密文（与密钥流 XOR）。
  * 密钥长度 16 字节；IV 每次加密随机生成并随密文携带。
  */
 final class ZucEncryptor implements EncryptorInterface
 {
     private const PREFIX = 'v1';
+    private const MAC_LEN = 32;
+    private const IV_LEN = 16;
 
     public function __construct(
         private readonly string $key,
@@ -32,9 +38,16 @@ final class ZucEncryptor implements EncryptorInterface
 
     public function encrypt(string $plaintext): string
     {
-        $iv = random_bytes(16);
+        $iv = random_bytes(self::IV_LEN);
+        $ct = $this->xorKeystream($this->key, $iv, $plaintext);
 
-        return self::PREFIX . $iv . $this->xorKeystream($this->key, $iv, $plaintext);
+        $macKey = hash_hmac('sha256', $this->key, 'dgn:enc:hmac', true);
+        $mac = hash_hmac('sha256', $iv . $ct, $macKey, true);
+        if (strlen($mac) !== self::MAC_LEN) {
+            throw new EncryptionException('ZUC HMAC generation failed.');
+        }
+
+        return self::PREFIX . $iv . $mac . $ct;
     }
 
     public function decrypt(string $ciphertext): string
@@ -43,11 +56,18 @@ final class ZucEncryptor implements EncryptorInterface
             throw new EncryptionException('Invalid ZUC ciphertext prefix.');
         }
         $blob = substr($ciphertext, strlen(self::PREFIX));
-        if (strlen($blob) < 16) {
+        if (strlen($blob) < self::IV_LEN + self::MAC_LEN) {
             throw new EncryptionException('ZUC ciphertext too short.');
         }
-        $iv = substr($blob, 0, 16);
-        $ct = substr($blob, 16);
+        $iv = substr($blob, 0, self::IV_LEN);
+        $mac = substr($blob, self::IV_LEN, self::MAC_LEN);
+        $ct = substr($blob, self::IV_LEN + self::MAC_LEN);
+
+        $macKey = hash_hmac('sha256', $this->key, 'dgn:enc:hmac', true);
+        $expected = hash_hmac('sha256', $iv . $ct, $macKey, true);
+        if (!hash_equals($expected, $mac)) {
+            throw new EncryptionException('ZUC MAC verification failed.');
+        }
 
         return $this->xorKeystream($this->key, $iv, $ct);
     }

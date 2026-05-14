@@ -4,6 +4,29 @@
 
 A pluggable cryptography component library: under a unified contract it provides **symmetric encryption**, **asymmetric encryption**, **hashing**, and **key derivation** (HKDF / PBKDF2), with implementations including AES/Sodium and Chinese national algorithms SM2/SM3/SM4/ZUC. Installable via Composer.
 
+## About the project
+
+### What it is
+
+`erikwang2013/encryption` is a pure PHP cryptography component library that gives PHP applications **type-safe, extensible** encryption, hashing, and key derivation. It has zero framework dependencies and works standalone or within Laravel, ThinkPHP, Hyperf, and webman.
+
+### Why it exists
+
+PHP's cryptography landscape is fragmented: Laravel ships its own `Crypt`, Chinese national algorithms (SM2/SM3/SM4) lack a unified Composer package, and key derivation primitives (HKDF/PBKDF2) have no common interface. This library converges mainstream symmetric/asymmetric/hash/KDF algorithms under a **single contract system**, so that:
+
+- **Application code only depends on interfaces** — switching algorithms requires zero business-logic changes
+- **Guomi algorithms get first-class treatment** — call them through the same Manager as AES/Sodium
+- **Key management is standardized** — derive per-algorithm sub-keys from one master key, preventing key reuse across ciphers
+- **Secure defaults are built in** — authenticated encryption (GCM / encrypt-then-MAC), random IVs, and constant-time comparison come out of the box
+
+### Use cases
+
+- Field-level encryption (encrypt PII such as phone numbers or ID numbers before storing to the database)
+- Multi-algorithm coexistence and gradual migration (e.g. AES-256-CBC to AES-256-GCM)
+- Guomi-compliant back-office systems (SM2 asymmetric, SM3 hashing, SM4 symmetric, ZUC stream cipher)
+- API signing and verification (HMAC / SHA-256 / SM3)
+- Sub-key derivation from passwords or master keys (PBKDF2 / HKDF)
+
 ## Table of contents
 
 - [Framework compatibility](#framework-compatibility)

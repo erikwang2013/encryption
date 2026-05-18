@@ -456,6 +456,14 @@ Equivalent to `./vendor/bin/phpunit tests/`. If you add `phpunit.xml`, point the
 
 ---
 
+## 开源不易，欢迎支持
+
+| 微信 | 支付宝 |
+|:---:|:---:|
+| ![微信](./docs/weixinpay.png "微信") | ![支付宝](./docs/alipay.png "支付宝") |
+
+---
+
 ## License
 
 MIT (see the `license` field in `composer.json`).

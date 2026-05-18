@@ -456,6 +456,14 @@ composer test
 
 ---
 
+## 开源不易，欢迎支持
+
+| 微信 | 支付宝 |
+|:---:|:---:|
+| ![微信](./docs/weixinpay.png "微信") | ![支付宝](./docs/alipay.png "支付宝") |
+
+---
+
 ## 许可证
 
 MIT（见 `composer.json` 中 `license` 字段）。

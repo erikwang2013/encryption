@@ -10,6 +10,7 @@ namespace Erikwang2013\Encryption\Guomi;
 
 use CryptoSm\SM3\Sm3;
 use Erikwang2013\Encryption\Contract\HasherInterface;
+use Erikwang2013\Encryption\Exception\EncryptionException;
 
 /**
  * 国密 SM3 杂凑（依赖 pohoc/crypto-sm）。
@@ -29,8 +30,12 @@ final class Sm3Hasher implements HasherInterface
     public function digest(string $data): string
     {
         $hex = Sm3::hash($data);
+        $bin = hex2bin($hex);
+        if ($bin === false) {
+            throw new EncryptionException('SM3 hex2bin conversion failed.');
+        }
 
-        return hex2bin($hex);
+        return $bin;
     }
 
     public function digestHex(string $data): string

@@ -191,19 +191,19 @@ final class ZucEngine
 
     private function addM(int $a, int $b): int
     {
-        $a &= 0xFFFFFFFF;
-        $b &= 0xFFFFFFFF;
-        $c = ($a + $b) & 0xFFFFFFFF;
+        $a &= 0x7FFFFFFF;
+        $b &= 0x7FFFFFFF;
+        $c = $a + $b;
 
-        return (($c & 0x7fffffff) + ($c >> 31)) & 0xFFFFFFFF;
+        return (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
     }
 
     private function mulByPow2(int $x, int $k): int
     {
         $x &= 0x7FFFFFFF;
-        $k &= 0xff;
+        $k &= 31;
 
-        return (((($x << $k) | ($x >> (31 - $k)))) & 0x7FFFFFFF) & 0xFFFFFFFF;
+        return ((($x << $k) | ($x >> (31 - $k))) & 0x7FFFFFFF);
     }
 
     private function rot(int $a, int $k): int

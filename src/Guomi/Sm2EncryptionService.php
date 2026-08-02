@@ -22,7 +22,7 @@ final class Sm2EncryptionService
     public static function requireGmp(): void
     {
         if (!extension_loaded('gmp')) {
-            throw new EncryptionException('SM2 加解密需要 PHP 扩展 ext-gmp。');
+            throw new EncryptionException('SM2 requires ext-gmp.');
         }
     }
 

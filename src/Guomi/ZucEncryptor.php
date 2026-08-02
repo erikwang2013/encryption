@@ -18,9 +18,10 @@ use Erikwang2013\Encryption\Guomi\Internal\ZucEngine;
  */
 final class ZucEncryptor implements EncryptorInterface
 {
+    public const KEY_LEN = 16;
+    public const IV_LEN = 16;
+    public const MAC_LEN = 32;
     private const PREFIX = 'v1';
-    private const MAC_LEN = 32;
-    private const IV_LEN = 16;
 
     public function __construct(
         private readonly string $key,

@@ -16,9 +16,9 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
  */
 final class Aes256GcmEncryptor implements EncryptorInterface
 {
-    private const IV_LEN = 12;
-    private const TAG_LEN = 16;
-    private const KEY_LEN = 32;
+    public const IV_LEN = 12;
+    public const TAG_LEN = 16;
+    public const KEY_LEN = 32;
     private const PREFIX = 'v1';
 
     public function __construct(

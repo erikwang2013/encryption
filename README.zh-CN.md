@@ -291,7 +291,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('数据');
 ```
 
-主密钥工厂：`EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` 可一次注册多种对称算法子密钥。
+主密钥工厂：`EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` 从主密钥派生各算法独立子密钥，一次性注册 **aes-256-gcm**、**aes-256-cbc-hmac**、**sm4-cbc**、**zuc-128**，以及 **sodium-xchacha20**（需 ext-sodium 可用）。
 
 ### 2. 非对称加密
 
@@ -460,7 +460,7 @@ composer test
 
 | 微信 | 支付宝 |
 |:---:|:---:|
-| ![微信](./docs/weixinpay.png "微信") | ![支付宝](./docs/alipay.png "支付宝") |
+| <img src="./docs/weixinpay.png" alt="微信" width="130" height="130" /> | <img src="./docs/alipay.png" alt="支付宝" width="130" height="130" /> |
 
 ---
 

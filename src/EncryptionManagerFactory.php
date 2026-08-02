@@ -11,6 +11,8 @@ namespace Erikwang2013\Encryption;
 use Erikwang2013\Encryption\Encryptor\Aes256GcmEncryptor;
 use Erikwang2013\Encryption\Encryptor\OpenSslAes256CbcEncryptor;
 use Erikwang2013\Encryption\Encryptor\SodiumXChaCha20Encryptor;
+use Erikwang2013\Encryption\Guomi\Sm4CbcEncryptor;
+use Erikwang2013\Encryption\Guomi\ZucEncryptor;
 
 /**
  * 从 32 字节主密钥快速构建常用组合（各算法独立派生子密钥，避免同一密钥跨算法复用）。
@@ -34,6 +36,12 @@ final class EncryptionManagerFactory
 
         $cbcKey = hash_hmac('sha256', $masterKey, 'dgn:derive:aes-cbc', true);
         $registry->register(new OpenSslAes256CbcEncryptor($cbcKey));
+
+        $sm4Key = substr(hash_hmac('sha256', $masterKey, 'dgn:derive:sm4', true), 0, 16);
+        $registry->register(new Sm4CbcEncryptor($sm4Key));
+
+        $zucKey = substr(hash_hmac('sha256', $masterKey, 'dgn:derive:zuc', true), 0, 16);
+        $registry->register(new ZucEncryptor($zucKey));
 
         if (extension_loaded('sodium')) {
             $sodiumKey = hash_hmac('sha256', $masterKey, 'dgn:derive:sodium', true);

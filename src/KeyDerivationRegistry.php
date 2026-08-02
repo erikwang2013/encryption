@@ -32,6 +32,9 @@ final class KeyDerivationRegistry
         if ($id === '') {
             throw new EncryptionException('KDF identifier must not be empty.');
         }
+        if (isset($this->kdfs[$id])) {
+            throw new EncryptionException(sprintf('KDF "%s" is already registered.', $id));
+        }
         $this->kdfs[$id] = $kdf;
 
         return $this;

@@ -17,9 +17,9 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
  */
 final class OpenSslAes256CbcEncryptor implements EncryptorInterface
 {
-    private const IV_LEN = 16;
-    private const MAC_LEN = 32;
-    private const KEY_LEN = 32;
+    public const IV_LEN = 16;
+    public const MAC_LEN = 32;
+    public const KEY_LEN = 32;
     private const PREFIX = 'v1';
 
     public function __construct(

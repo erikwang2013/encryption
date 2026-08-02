@@ -11,6 +11,7 @@ namespace Erikwang2013\Encryption\Tests;
 use Erikwang2013\Encryption\Asymmetric\Sm2AsymmetricCipher;
 use Erikwang2013\Encryption\AsymmetricCipherRegistry;
 use Erikwang2013\Encryption\AsymmetricCryptoManager;
+use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Sm2EncryptionService;
 use Erikwang2013\Encryption\Hash\Sha256Hasher;
 use Erikwang2013\Encryption\HashingManager;
@@ -39,6 +40,21 @@ final class CryptoPrimitivesTest extends TestCase
         self::assertSame(64, strlen($d));
     }
 
+    public function testHashingManagerSetDefaultIdentifier(): void
+    {
+        $registry = new HasherRegistry(new Sha256Hasher());
+        $mgr = new HashingManager($registry, 'sha256');
+        self::assertSame('sha256', $mgr->getDefaultIdentifier());
+    }
+
+    public function testHasherRegistryDuplicateThrows(): void
+    {
+        $registry = new HasherRegistry(new Sha256Hasher());
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('already registered');
+        $registry->register(new Sha256Hasher());
+    }
+
     public function testHkdf(): void
     {
         $kdf = new HkdfSha256();
@@ -50,6 +66,21 @@ final class CryptoPrimitivesTest extends TestCase
         self::assertSame(16, strlen($mgr->derive($ikm, $salt, 16, 'ctx')));
     }
 
+    public function testHkdfZeroLength(): void
+    {
+        $kdf = new HkdfSha256();
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('HKDF output length must be positive');
+        $kdf->derive(random_bytes(32), random_bytes(16), 0);
+    }
+
+    public function testHkdfEmptySalt(): void
+    {
+        $kdf = new HkdfSha256();
+        $key = $kdf->derive(random_bytes(32), '', 32, 'ctx');
+        self::assertSame(32, strlen($key));
+    }
+
     public function testPbkdf2(): void
     {
         $kdf = new Pbkdf2Sha256(1000);
@@ -57,6 +88,22 @@ final class CryptoPrimitivesTest extends TestCase
         self::assertSame(32, strlen($out));
         $mgr = new PasswordBasedKdfManager(new PasswordBasedKdfRegistry($kdf), 'pbkdf2-sha256');
         self::assertSame(32, strlen($mgr->deriveFromPassword('secret', random_bytes(16), 32)));
+    }
+
+    public function testPbkdf2EmptySalt(): void
+    {
+        $kdf = new Pbkdf2Sha256(1000);
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('PBKDF2 salt must not be empty');
+        $kdf->deriveFromPassword('secret', '', 32);
+    }
+
+    public function testPbkdf2ZeroLength(): void
+    {
+        $kdf = new Pbkdf2Sha256(1000);
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('PBKDF2 output length must be positive');
+        $kdf->deriveFromPassword('secret', random_bytes(16), 0);
     }
 
     public function testSm2AsymmetricRoundTripWhenGmpAvailable(): void
@@ -72,5 +119,32 @@ final class CryptoPrimitivesTest extends TestCase
 
         $mgr = new AsymmetricCryptoManager(new AsymmetricCipherRegistry($cipher), 'sm2');
         self::assertSame($plain, $mgr->decrypt($mgr->encrypt($plain, $pair->getPublicKey()), $pair->getPrivateKey()));
+    }
+
+    public function testAsymmetricRegistryDuplicateThrows(): void
+    {
+        $cipher = new Sm2AsymmetricCipher();
+        $registry = new AsymmetricCipherRegistry($cipher);
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('already registered');
+        $registry->register(new Sm2AsymmetricCipher());
+    }
+
+    public function testKeyDerivationRegistryDuplicateThrows(): void
+    {
+        $kdf = new HkdfSha256();
+        $registry = new KeyDerivationRegistry($kdf);
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('already registered');
+        $registry->register(new HkdfSha256());
+    }
+
+    public function testPasswordKdfRegistryDuplicateThrows(): void
+    {
+        $kdf = new Pbkdf2Sha256(1000);
+        $registry = new PasswordBasedKdfRegistry($kdf);
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('already registered');
+        $registry->register(new Pbkdf2Sha256(1000));
     }
 }

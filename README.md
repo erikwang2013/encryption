@@ -291,7 +291,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-Master-key factory: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` can register subkeys for multiple symmetric algorithms at once.
+Master-key factory: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` derives per-algorithm subkeys and registers **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128**, and **sodium-xchacha20** (if ext-sodium is available) at once.
 
 ### 2. Asymmetric encryption
 
@@ -456,11 +456,11 @@ Equivalent to `./vendor/bin/phpunit tests/`. If you add `phpunit.xml`, point the
 
 ---
 
-## 开源不易，欢迎支持
+## Thank you for your support / 开源不易，欢迎支持
 
-| 微信 | 支付宝 |
+| WeChat Pay / 微信 | Alipay / 支付宝 |
 |:---:|:---:|
-| ![微信](./docs/weixinpay.png "微信") | ![支付宝](./docs/alipay.png "支付宝") |
+| <img src="./docs/weixinpay.png" alt="WeChat Pay" width="130" height="130" /> | <img src="./docs/alipay.png" alt="Alipay" width="130" height="130" /> |
 
 ---
 

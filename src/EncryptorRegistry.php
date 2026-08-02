@@ -32,6 +32,9 @@ final class EncryptorRegistry
         if ($id === '') {
             throw new EncryptionException('Encryptor identifier must not be empty.');
         }
+        if (isset($this->encryptors[$id])) {
+            throw new EncryptionException(sprintf('Encryptor "%s" is already registered.', $id));
+        }
         $this->encryptors[$id] = $encryptor;
 
         return $this;

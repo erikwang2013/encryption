@@ -32,6 +32,9 @@ final class AsymmetricCipherRegistry
         if ($id === '') {
             throw new EncryptionException('Asymmetric cipher identifier must not be empty.');
         }
+        if (isset($this->ciphers[$id])) {
+            throw new EncryptionException(sprintf('Asymmetric cipher "%s" is already registered.', $id));
+        }
         $this->ciphers[$id] = $cipher;
 
         return $this;

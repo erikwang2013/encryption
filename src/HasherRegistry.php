@@ -32,6 +32,9 @@ final class HasherRegistry
         if ($id === '') {
             throw new EncryptionException('Hasher identifier must not be empty.');
         }
+        if (isset($this->hashers[$id])) {
+            throw new EncryptionException(sprintf('Hasher "%s" is already registered.', $id));
+        }
         $this->hashers[$id] = $hasher;
 
         return $this;

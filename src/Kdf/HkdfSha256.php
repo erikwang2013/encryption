@@ -31,9 +31,10 @@ final class HkdfSha256 implements KeyDerivationInterface
         if ($length < 1) {
             throw new EncryptionException('HKDF output length must be positive.');
         }
-        $out = @hash_hkdf('sha256', $ikm, $length, $info, $salt !== '' ? $salt : null);
-        if ($out === false) {
-            throw new EncryptionException('HKDF failed.');
+        try {
+            $out = hash_hkdf('sha256', $ikm, $length, $info, $salt);
+        } catch (\ValueError $e) {
+            throw new EncryptionException('HKDF failed: ' . $e->getMessage(), 0, $e);
         }
 
         return $out;

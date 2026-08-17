@@ -61,6 +61,15 @@ final class EncryptorRoundTripTest extends TestCase
         $e->decrypt($tampered);
     }
 
+    public function testAes256GcmBoundarySizes(): void
+    {
+        $e = new Aes256GcmEncryptor(random_bytes(Aes256GcmEncryptor::KEY_LEN));
+        foreach ([0, 1, 15, 16, 17, 31, 32] as $len) {
+            $plain = $len === 0 ? '' : random_bytes($len);
+            self::assertSame($plain, $e->decrypt($e->encrypt($plain)), "AES-256-GCM round trip failed for {$len} bytes");
+        }
+    }
+
     public function testAes256CbcRoundTrip(): void
     {
         $key = random_bytes(OpenSslAes256CbcEncryptor::KEY_LEN);
@@ -95,6 +104,15 @@ final class EncryptorRoundTripTest extends TestCase
         $e->decrypt($tampered);
     }
 
+    public function testAes256CbcBoundarySizes(): void
+    {
+        $e = new OpenSslAes256CbcEncryptor(random_bytes(OpenSslAes256CbcEncryptor::KEY_LEN));
+        foreach ([0, 1, 15, 16, 17, 31, 32] as $len) {
+            $plain = $len === 0 ? '' : random_bytes($len);
+            self::assertSame($plain, $e->decrypt($e->encrypt($plain)), "AES-256-CBC round trip failed for {$len} bytes");
+        }
+    }
+
     public function testSodiumRoundTripWhenAvailable(): void
     {
         if (!extension_loaded('sodium')) {
@@ -127,6 +145,18 @@ final class EncryptorRoundTripTest extends TestCase
         $e->decrypt('bad');
     }
 
+    public function testSodiumBoundarySizes(): void
+    {
+        if (!extension_loaded('sodium')) {
+            self::markTestSkipped('ext-sodium not loaded');
+        }
+        $e = new SodiumXChaCha20Encryptor(random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES));
+        foreach ([0, 1, 15, 16, 17, 31, 32] as $len) {
+            $plain = $len === 0 ? '' : random_bytes($len);
+            self::assertSame($plain, $e->decrypt($e->encrypt($plain)), "Sodium round trip failed for {$len} bytes");
+        }
+    }
+
     public function testManagerUsesRegistry(): void
     {
         $key = random_bytes(Aes256GcmEncryptor::KEY_LEN);
@@ -139,10 +169,17 @@ final class EncryptorRoundTripTest extends TestCase
 
     public function testManagerSetDefaultIdentifier(): void
     {
-        $key = random_bytes(Aes256GcmEncryptor::KEY_LEN);
-        $registry = new EncryptorRegistry(new Aes256GcmEncryptor($key));
+        $gcmKey = random_bytes(Aes256GcmEncryptor::KEY_LEN);
+        $cbcKey = random_bytes(OpenSslAes256CbcEncryptor::KEY_LEN);
+        $registry = new EncryptorRegistry(new Aes256GcmEncryptor($gcmKey), new OpenSslAes256CbcEncryptor($cbcKey));
         $mgr = new EncryptionManager($registry, 'aes-256-gcm');
-        self::assertSame('aes-256-gcm', $mgr->getDefaultIdentifier());
+        $mgr->setDefaultIdentifier('aes-256-cbc-hmac');
+        self::assertSame('aes-256-cbc-hmac', $mgr->getDefaultIdentifier());
+        $ct = $mgr->encrypt('switched-default');
+        // 默认已切到 CBC（不同密钥）：显式 CBC 可解，旧默认 GCM 必须失败。
+        self::assertSame('switched-default', $mgr->decrypt($ct, 'aes-256-cbc-hmac'));
+        $this->expectException(EncryptionException::class);
+        $mgr->decrypt($ct, 'aes-256-gcm');
     }
 
     public function testManagerSetDefaultIdentifierToUnknown(): void
@@ -179,6 +216,20 @@ final class EncryptorRoundTripTest extends TestCase
         $plain = 'factory';
         $ct = $mgr->encrypt($plain);
         self::assertSame($plain, $mgr->decrypt($ct));
+    }
+
+    public function testFactoryWrongMasterKeyLengthThrowsEncryptionException(): void
+    {
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('Master key must be exactly 32 bytes.');
+        EncryptionManagerFactory::fromMasterKey(random_bytes(16));
+    }
+
+    public function testFactoryUnavailableDefaultThrowsEncryptionException(): void
+    {
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('Default encryptor "nonexistent" is not available');
+        EncryptionManagerFactory::fromMasterKey(random_bytes(32), 'nonexistent');
     }
 
     public function testFactoryRegistersSm4(): void

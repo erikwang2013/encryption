@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption;
 
+use Erikwang2013\Encryption\Contract\KeyDerivationInterface;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 
 /**
@@ -22,6 +23,11 @@ final class KeyDerivationManager
         if (!$registry->has($defaultIdentifier)) {
             throw new EncryptionException(sprintf('Default KDF "%s" is not registered.', $defaultIdentifier));
         }
+    }
+
+    public function defaultKdf(): KeyDerivationInterface
+    {
+        return $this->registry->get($this->defaultIdentifier);
     }
 
     public function derive(string $ikm, string $salt, int $length, string $info = '', ?string $identifier = null): string

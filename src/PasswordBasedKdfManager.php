@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption;
 
+use Erikwang2013\Encryption\Contract\PasswordBasedKdfInterface;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 
 /**
@@ -22,6 +23,11 @@ final class PasswordBasedKdfManager
         if (!$registry->has($defaultIdentifier)) {
             throw new EncryptionException(sprintf('Default password KDF "%s" is not registered.', $defaultIdentifier));
         }
+    }
+
+    public function defaultKdf(): PasswordBasedKdfInterface
+    {
+        return $this->registry->get($this->defaultIdentifier);
     }
 
     public function deriveFromPassword(string $password, string $salt, int $length, ?string $identifier = null): string

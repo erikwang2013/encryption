@@ -12,7 +12,7 @@ use Erikwang2013\Encryption\Contract\EncryptorInterface;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 
 /**
- * AES-256-GCM（OpenSSL），认证加密；载荷格式：IV(12) | Tag(16) | Ciphertext。
+ * AES-256-GCM（OpenSSL），认证加密；载荷格式：v1 | IV(12) | Tag(16) | Ciphertext。
  */
 final class Aes256GcmEncryptor implements EncryptorInterface
 {

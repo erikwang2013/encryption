@@ -12,7 +12,7 @@ use Erikwang2013\Encryption\Contract\EncryptorInterface;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 
 /**
- * libsodium XChaCha20-Poly1305 IETF；载荷格式：Nonce(24) | Ciphertext。
+ * libsodium XChaCha20-Poly1305 IETF；载荷格式：v1 | Nonce(24) | Ciphertext。
  * 需 ext-sodium。
  */
 final class SodiumXChaCha20Encryptor implements EncryptorInterface

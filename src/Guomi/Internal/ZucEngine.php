@@ -11,17 +11,16 @@ namespace Erikwang2013\Encryption\Guomi\Internal;
 /**
  * ZUC-128 流密码核心（ETSI / SAGE 参考实现逻辑，用于 128-EEA3 等）。
  * 算法说明见 GSMA ZUC Specification v1.6。
+ * 性能优化：LFSR 环形缓冲（新 cell15 写旧 cell0 位置，读 (h+i)&15）、
+ * l1/l2 与 addM 链单表达式内联（mod 2^31-1 进位折叠保留）。
  */
 final class ZucEngine
 {
-    /** @var list<int> 16 × 31-bit cells */
+    /** @var list<int> 16 × 31-bit cells；cell i == lfsr[(h+i)&15] */
     private array $lfsr = [];
 
-    private int $x0 = 0;
-
-    private int $x1 = 0;
-
-    private int $x2 = 0;
+    /** 环形头：新 cell15 写到当前 h 位置（旧 cell0 处），随后 h=(h+1)&15 */
+    private int $h = 0;
 
     private int $x3 = 0;
 
@@ -86,24 +85,18 @@ final class ZucEngine
         if (strlen($this->key) !== 16 || strlen($this->iv) !== 16) {
             throw new \InvalidArgumentException('ZUC key and IV must be 16 bytes each.');
         }
-        $this->initialization();
-    }
-
-    private function initialization(): void
-    {
         $k = $this->key;
         $iv = $this->iv;
         $this->isFirst = true;
+        $this->h = 0;
         $this->lfsr = [];
         for ($i = 0; $i < 16; $i++) {
-            $this->lfsr[$i] = $this->makeU31(ord($k[$i]), self::D[$i], ord($iv[$i]));
+            $this->lfsr[$i] = ((ord($k[$i]) << 23) | ((self::D[$i] & 0xffff) << 8) | ord($iv[$i])) & 0x7FFFFFFF;
         }
         $this->r1 = 0;
         $this->r2 = 0;
         for ($n = 32; $n > 0; $n--) {
-            $this->bitReorganization();
-            $w = $this->fDash();
-            $this->lfsrWithInitialisationMode($w >> 1);
+            $this->step(true); // 初始化模式：反馈加 (w>>1)
         }
         $this->initialized = true;
     }
@@ -114,127 +107,64 @@ final class ZucEngine
             throw new \RuntimeException('ZUC not initialized.');
         }
         if ($this->isFirst) {
-            $this->bitReorganization();
-            $this->fDash();
-            $this->lfsrWithWorkMode();
+            $this->step(false); // 按规范丢弃第一个密钥字
             $this->isFirst = false;
         }
-        $this->bitReorganization();
-        $k = $this->fDash() ^ $this->x3;
-        $this->lfsrWithWorkMode();
+        $w = $this->step(false);
 
-        return $k & 0xFFFFFFFF;
+        return ($w ^ $this->x3) & 0xFFFFFFFF;
     }
 
-    private function lfsrUpdate(int $f): void
-    {
-        for ($i = 0; $i < 15; $i++) {
-            $this->lfsr[$i] = $this->lfsr[$i + 1];
-        }
-        $this->lfsr[15] = $f & 0x7FFFFFFF;
-    }
-
-    private function lfsrWithInitialisationMode(int $u): void
-    {
-        $f = $this->lfsr[0] & 0x7FFFFFFF;
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[0], 8));
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[4], 20));
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[10], 21));
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[13], 17));
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[15], 15));
-        $f = $this->addM($f, $u & 0xFFFFFFFF);
-        $this->lfsrUpdate($f);
-    }
-
-    private function lfsrWithWorkMode(): void
-    {
-        $f = $this->lfsr[0] & 0x7FFFFFFF;
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[0], 8));
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[4], 20));
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[10], 21));
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[13], 17));
-        $f = $this->addM($f, $this->mulByPow2($this->lfsr[15], 15));
-        $this->lfsrUpdate($f);
-    }
-
-    private function bitReorganization(): void
+    /** 一个完整 ZUC 周期（bitReorg + fDash + LFSR 更新）；$init: 反馈加 (w>>1)。 */
+    private function step(bool $init): int
     {
         $s = $this->lfsr;
-        $this->x0 = (((($s[15] & 0x7FFF8000) << 1) | ($s[14] & 0xFFFF)) & 0xFFFFFFFF);
-        $this->x1 = (((($s[11] & 0xFFFF) << 16) | (($s[9] >> 15) & 0xFFFF)) & 0xFFFFFFFF);
-        $this->x2 = (((($s[7] & 0xFFFF) << 16) | (($s[5] >> 15) & 0xFFFF)) & 0xFFFFFFFF);
-        $this->x3 = (((($s[2] & 0xFFFF) << 16) | (($s[0] >> 15) & 0xFFFF)) & 0xFFFFFFFF);
-    }
+        $h = $this->h;
+        $i0 = $h; $i1 = ($h + 1) & 15; $i2 = ($h + 2) & 15; $i4 = ($h + 4) & 15;
+        $i5 = ($h + 5) & 15; $i7 = ($h + 7) & 15; $i9 = ($h + 9) & 15; $i10 = ($h + 10) & 15;
+        $i11 = ($h + 11) & 15; $i13 = ($h + 13) & 15; $i14 = ($h + 14) & 15; $i15 = ($h + 15) & 15;
+        // bitReorg
+        $x0 = (((($s[$i15] & 0x7FFF8000) << 1) | ($s[$i14] & 0xFFFF)) & 0xFFFFFFFF);
+        $x1 = (((($s[$i11] & 0xFFFF) << 16) | (($s[$i9] >> 15) & 0xFFFF)) & 0xFFFFFFFF);
+        $x2 = (((($s[$i7] & 0xFFFF) << 16) | (($s[$i5] >> 15) & 0xFFFF)) & 0xFFFFFFFF);
+        $this->x3 = (((($s[$i2] & 0xFFFF) << 16) | (($s[$i0] >> 15) & 0xFFFF)) & 0xFFFFFFFF);
+        // fDash：l1/l2 内联为旋转+异或链，一次掩码
+        $r1 = $this->r1; $r2 = $this->r2;
+        $w = (($x0 ^ $r1) + $r2) & 0xFFFFFFFF;
+        $w1 = ($r1 + $x1) & 0xFFFFFFFF;
+        $w2 = ($r2 ^ $x2) & 0xFFFFFFFF;
+        $u = (($w1 << 16) | ($w2 >> 16)) & 0xFFFFFFFF;
+        $v = (($w2 << 16) | ($w1 >> 16)) & 0xFFFFFFFF;
+        $l1 = ($u ^ (($u << 2) | ($u >> 30)) ^ (($u << 10) | ($u >> 22)) ^ (($u << 18) | ($u >> 14)) ^ (($u << 24) | ($u >> 8))) & 0xFFFFFFFF;
+        $l2 = ($v ^ (($v << 8) | ($v >> 24)) ^ (($v << 14) | ($v >> 18)) ^ (($v << 22) | ($v >> 10)) ^ (($v << 30) | ($v >> 2))) & 0xFFFFFFFF;
+        $this->r1 = ((self::S0[$l1 >> 24] << 24) | (self::S1[($l1 >> 16) & 0xff] << 16) | (self::S0[($l1 >> 8) & 0xff] << 8) | self::S1[$l1 & 0xff]) & 0xFFFFFFFF;
+        $this->r2 = ((self::S0[$l2 >> 24] << 24) | (self::S1[($l2 >> 16) & 0xff] << 16) | (self::S0[($l2 >> 8) & 0xff] << 8) | self::S1[$l2 & 0xff]) & 0xFFFFFFFF;
+        // LFSR 反馈 addM 链内联；旋转项先 & 0x7FFFFFFF（mulByPow2 语义），每步折叠进位
+        $s0 = $s[$i0];
+        $t = (($s0 << 8) | ($s0 >> 23)) & 0x7FFFFFFF;
+        $c = $s0 + $t;
+        $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+        $t = (($s[$i4] << 20) | ($s[$i4] >> 11)) & 0x7FFFFFFF;
+        $c = $f + $t;
+        $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+        $t = (($s[$i10] << 21) | ($s[$i10] >> 10)) & 0x7FFFFFFF;
+        $c = $f + $t;
+        $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+        $t = (($s[$i13] << 17) | ($s[$i13] >> 14)) & 0x7FFFFFFF;
+        $c = $f + $t;
+        $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+        $t = (($s[$i15] << 15) | ($s[$i15] >> 16)) & 0x7FFFFFFF;
+        $c = $f + $t;
+        $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+        if ($init) {
+            // mod 2^31-1 折叠是进位补偿，初始化模式的 (w>>1) 也必须折叠
+            $c = $f + ($w >> 1);
+            $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+        }
+        $s[$h] = $f & 0x7FFFFFFF; // 新 cell15 落在旧 cell0 位置
+        $this->h = ($h + 1) & 15;
+        $this->lfsr = $s;
 
-    private function fDash(): int
-    {
-        $w = (($this->x0 ^ $this->r1) + $this->r2) & 0xFFFFFFFF;
-        $w1 = ($this->r1 + $this->x1) & 0xFFFFFFFF;
-        $w2 = ($this->r2 ^ $this->x2) & 0xFFFFFFFF;
-        $u = $this->l1((($w1 << 16) | ($w2 >> 16)) & 0xFFFFFFFF);
-        $v = $this->l2((($w2 << 16) | ($w1 >> 16)) & 0xFFFFFFFF);
-        $this->r1 = $this->makeU32(
-            self::S0[($u >> 24) & 0xff],
-            self::S1[($u >> 16) & 0xff],
-            self::S0[($u >> 8) & 0xff],
-            self::S1[$u & 0xff]
-        );
-        $this->r2 = $this->makeU32(
-            self::S0[($v >> 24) & 0xff],
-            self::S1[($v >> 16) & 0xff],
-            self::S0[($v >> 8) & 0xff],
-            self::S1[$v & 0xff]
-        );
-
-        return $w & 0xFFFFFFFF;
-    }
-
-    private function addM(int $a, int $b): int
-    {
-        $a &= 0x7FFFFFFF;
-        $b &= 0x7FFFFFFF;
-        $c = $a + $b;
-
-        return (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
-    }
-
-    private function mulByPow2(int $x, int $k): int
-    {
-        $x &= 0x7FFFFFFF;
-        $k &= 31;
-
-        return ((($x << $k) | ($x >> (31 - $k))) & 0x7FFFFFFF);
-    }
-
-    private function rot(int $a, int $k): int
-    {
-        $a &= 0xFFFFFFFF;
-        $k &= 31;
-
-        return ((($a << $k) | (($a & 0xFFFFFFFF) >> (32 - $k))) & 0xFFFFFFFF);
-    }
-
-    private function makeU32(int $a, int $b, int $c, int $d): int
-    {
-        return (($a << 24) | (($b & 0xff) << 16) | (($c & 0xff) << 8) | ($d & 0xff)) & 0xFFFFFFFF;
-    }
-
-    private function makeU31(int $a, int $b, int $c): int
-    {
-        return (($a << 23) | (($b & 0xffff) << 8) | ($c & 0xff)) & 0x7FFFFFFF;
-    }
-
-    private function l1(int $x): int
-    {
-        $x &= 0xFFFFFFFF;
-
-        return ($x ^ $this->rot($x, 2) ^ $this->rot($x, 10) ^ $this->rot($x, 18) ^ $this->rot($x, 24)) & 0xFFFFFFFF;
-    }
-
-    private function l2(int $x): int
-    {
-        $x &= 0xFFFFFFFF;
-
-        return ($x ^ $this->rot($x, 8) ^ $this->rot($x, 14) ^ $this->rot($x, 22) ^ $this->rot($x, 30)) & 0xFFFFFFFF;
+        return $w;
     }
 }

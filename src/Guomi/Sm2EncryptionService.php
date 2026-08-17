@@ -47,12 +47,20 @@ final class Sm2EncryptionService
     }
 
     /**
-     * 生成十六进制公私钥对（需 ext-gmp）。
+     * 生成十六进制公私钥对（需 ext-gmp；私钥 d 用 CSPRNG 采样，替代 vendor 的非安全 gmp_random_range）。
      */
     public static function generateKeyPairHex(): Keypair
     {
         self::requireGmp();
 
-        return Sm2::generateKeyPairHex();
+        $n = gmp_init('FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123', 16);
+        do {
+            $d = gmp_init(bin2hex(random_bytes(32)), 16);
+        } while (gmp_cmp($d, 1) < 0 || gmp_cmp($d, $n) >= 0);
+
+        $privateKey = str_pad(gmp_strval($d, 16), 64, '0', STR_PAD_LEFT);
+        $publicKey = (new \ReflectionMethod(Sm2::class, 'pointMultiply'))->invoke(null, $privateKey);
+
+        return new Keypair($privateKey, $publicKey);
     }
 }

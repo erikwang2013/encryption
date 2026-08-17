@@ -13,6 +13,7 @@ use Erikwang2013\Encryption\AsymmetricCipherRegistry;
 use Erikwang2013\Encryption\AsymmetricCryptoManager;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Sm2EncryptionService;
+use Erikwang2013\Encryption\Guomi\Sm3Hasher;
 use Erikwang2013\Encryption\Hash\Sha256Hasher;
 use Erikwang2013\Encryption\HashingManager;
 use Erikwang2013\Encryption\HasherRegistry;
@@ -42,9 +43,15 @@ final class CryptoPrimitivesTest extends TestCase
 
     public function testHashingManagerSetDefaultIdentifier(): void
     {
-        $registry = new HasherRegistry(new Sha256Hasher());
+        $registry = new HasherRegistry(new Sha256Hasher(), new Sm3Hasher());
         $mgr = new HashingManager($registry, 'sha256');
-        self::assertSame('sha256', $mgr->getDefaultIdentifier());
+        $mgr->setDefaultIdentifier('sm3');
+        self::assertSame('sm3', $mgr->getDefaultIdentifier());
+        // 默认切到 SM3 后，digestHex('abc') 必须等于 SM3 KAT 向量而非 SHA-256。
+        self::assertSame(
+            '66c7f0f462eeedd9d1f2d46bdc10e4e24167c4875cf2f7a2297da02b8f4ba8e0',
+            $mgr->digestHex('abc')
+        );
     }
 
     public function testHasherRegistryDuplicateThrows(): void
@@ -90,6 +97,31 @@ final class CryptoPrimitivesTest extends TestCase
         self::assertSame(32, strlen($mgr->deriveFromPassword('secret', random_bytes(16), 32)));
     }
 
+    public function testKeyDerivationManagerSetDefaultIdentifier(): void
+    {
+        $registry = new KeyDerivationRegistry(new HkdfSha256('hkdf-sha256'), new HkdfSha256('hkdf-sha256-v2'));
+        $mgr = new KeyDerivationManager($registry, 'hkdf-sha256');
+        $mgr->setDefaultIdentifier('hkdf-sha256-v2');
+        self::assertSame('hkdf-sha256-v2', $mgr->getDefaultIdentifier());
+        self::assertSame('hkdf-sha256-v2', $mgr->defaultKdf()->getIdentifier());
+        self::assertSame(16, strlen($mgr->derive(random_bytes(32), random_bytes(16), 16)));
+    }
+
+    public function testPasswordBasedKdfManagerSetDefaultIdentifier(): void
+    {
+        $registry = new PasswordBasedKdfRegistry(
+            new Pbkdf2Sha256(1000, 'pbkdf2-sha256'),
+            new Pbkdf2Sha256(2000, 'pbkdf2-sha256-strong')
+        );
+        $mgr = new PasswordBasedKdfManager($registry, 'pbkdf2-sha256');
+        $expected = $mgr->deriveFromPassword('secret', 'saltsalt', 32, 'pbkdf2-sha256-strong');
+        $mgr->setDefaultIdentifier('pbkdf2-sha256-strong');
+        self::assertSame('pbkdf2-sha256-strong', $mgr->getDefaultIdentifier());
+        self::assertSame('pbkdf2-sha256-strong', $mgr->defaultKdf()->getIdentifier());
+        // 迭代次数不同则派生结果不同，输出相等即证明默认路由真实切换。
+        self::assertSame($expected, $mgr->deriveFromPassword('secret', 'saltsalt', 32));
+    }
+
     public function testPbkdf2EmptySalt(): void
     {
         $kdf = new Pbkdf2Sha256(1000);
@@ -121,6 +153,29 @@ final class CryptoPrimitivesTest extends TestCase
         self::assertSame($plain, $mgr->decrypt($mgr->encrypt($plain, $pair->getPublicKey()), $pair->getPrivateKey()));
     }
 
+    public function testAsymmetricCryptoManagerSetDefaultIdentifier(): void
+    {
+        if (!extension_loaded('gmp')) {
+            self::markTestSkipped('ext-gmp not loaded');
+        }
+        $registry = new AsymmetricCipherRegistry(new Sm2AsymmetricCipher('sm2'), new Sm2AsymmetricCipher('sm2-v2'));
+        $mgr = new AsymmetricCryptoManager($registry, 'sm2');
+        $pair = Sm2EncryptionService::generateKeyPairHex();
+        $mgr->setDefaultIdentifier('sm2-v2');
+        self::assertSame('sm2-v2', $mgr->getDefaultIdentifier());
+        $plain = 'asymmetric-switch';
+        self::assertSame($plain, $mgr->decrypt($mgr->encrypt($plain, $pair->getPublicKey()), $pair->getPrivateKey()));
+    }
+
+    public function testSm2AsymmetricCipherRejectsInvalidPrivateKey(): void
+    {
+        // 私有钥校验发生在 gmp 调用之前，无需 ext-gmp 即可验证。
+        $cipher = new Sm2AsymmetricCipher();
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('Invalid SM2 private key.');
+        $cipher->decrypt('v1someciphertext', 'not-a-valid-key');
+    }
+
     public function testAsymmetricRegistryDuplicateThrows(): void
     {
         $cipher = new Sm2AsymmetricCipher();
@@ -137,6 +192,14 @@ final class CryptoPrimitivesTest extends TestCase
         $this->expectException(EncryptionException::class);
         $this->expectExceptionMessage('already registered');
         $registry->register(new HkdfSha256());
+    }
+
+    public function testKeyDerivationRegistryUnknownMessagePreservesCase(): void
+    {
+        $registry = new KeyDerivationRegistry();
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('Unknown KDF: nope');
+        $registry->get('nope');
     }
 
     public function testPasswordKdfRegistryDuplicateThrows(): void

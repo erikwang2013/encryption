@@ -11,6 +11,7 @@ namespace Erikwang2013\Encryption\Guomi;
 use Erikwang2013\Encryption\Contract\EncryptorInterface;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Internal\ZucEngine;
+use Erikwang2013\Encryption\Internal\EncryptThenMacBlob;
 
 /**
  * ZUC-128 流密码 + HMAC-SHA256（encrypt-then-mac）：载荷格式 v1 | IV(16) | MAC(32) | 密文（与密钥流 XOR）。
@@ -18,6 +19,8 @@ use Erikwang2013\Encryption\Guomi\Internal\ZucEngine;
  */
 final class ZucEncryptor implements EncryptorInterface
 {
+    use EncryptThenMacBlob;
+
     public const KEY_LEN = 16;
     public const IV_LEN = 16;
     public const MAC_LEN = 32;
@@ -40,53 +43,37 @@ final class ZucEncryptor implements EncryptorInterface
     public function encrypt(string $plaintext): string
     {
         $iv = random_bytes(self::IV_LEN);
-        $ct = $this->xorKeystream($this->key, $iv, $plaintext);
 
-        $macKey = hash_hmac('sha256', $this->key, 'dgn:enc:hmac', true);
-        $mac = hash_hmac('sha256', $iv . $ct, $macKey, true);
-        if (strlen($mac) !== self::MAC_LEN) {
-            throw new EncryptionException('ZUC HMAC generation failed.');
-        }
-
-        return self::PREFIX . $iv . $mac . $ct;
+        return $this->packWithMac($iv, $this->xorKeystream($this->key, $iv, $plaintext));
     }
 
     public function decrypt(string $ciphertext): string
     {
-        if (!str_starts_with($ciphertext, self::PREFIX)) {
-            throw new EncryptionException('Invalid ZUC ciphertext prefix.');
-        }
-        $blob = substr($ciphertext, strlen(self::PREFIX));
-        if (strlen($blob) < self::IV_LEN + self::MAC_LEN) {
-            throw new EncryptionException('ZUC ciphertext too short.');
-        }
-        $iv = substr($blob, 0, self::IV_LEN);
-        $mac = substr($blob, self::IV_LEN, self::MAC_LEN);
-        $ct = substr($blob, self::IV_LEN + self::MAC_LEN);
-
-        $macKey = hash_hmac('sha256', $this->key, 'dgn:enc:hmac', true);
-        $expected = hash_hmac('sha256', $iv . $ct, $macKey, true);
-        if (!hash_equals($expected, $mac)) {
-            throw new EncryptionException('ZUC MAC verification failed.');
-        }
+        [$iv, $mac, $ct] = $this->unpackAndVerify($ciphertext, self::PREFIX);
 
         return $this->xorKeystream($this->key, $iv, $ct);
+    }
+
+    protected function label(): string
+    {
+        return 'ZUC';
     }
 
     private function xorKeystream(string $key, string $iv, string $data): string
     {
         $engine = new ZucEngine($key, $iv);
-        $out = '';
         $len = strlen($data);
-        $i = 0;
-        while ($i < $len) {
-            $word = $engine->nextKey();
-            for ($j = 0; $j < 4 && $i < $len; $j++, $i++) {
-                $byte = ($word >> (8 * (3 - $j))) & 0xff;
-                $out .= chr(ord($data[$i]) ^ $byte);
-            }
+        // 批量生成与明文等长的密钥流，尾部不足 16 字节用 substr 截断补齐（密钥流与明文长度必须一致，
+        // 否则 PHP 字符串 XOR 会静默截断到短者，丢失尾部数据）
+        $ks = '';
+        $full = intdiv($len, 16);
+        for ($j = 0; $j < $full; $j++) {
+            $ks .= pack('N4', $engine->nextKey(), $engine->nextKey(), $engine->nextKey(), $engine->nextKey());
+        }
+        for ($j = $full * 16; $j < $len; $j += 4) {
+            $ks .= substr(pack('N', $engine->nextKey()), 0, min(4, $len - $j));
         }
 
-        return $out;
+        return $data ^ $ks;
     }
 }

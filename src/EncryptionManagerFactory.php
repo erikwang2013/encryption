@@ -11,6 +11,7 @@ namespace Erikwang2013\Encryption;
 use Erikwang2013\Encryption\Encryptor\Aes256GcmEncryptor;
 use Erikwang2013\Encryption\Encryptor\OpenSslAes256CbcEncryptor;
 use Erikwang2013\Encryption\Encryptor\SodiumXChaCha20Encryptor;
+use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Sm4CbcEncryptor;
 use Erikwang2013\Encryption\Guomi\ZucEncryptor;
 
@@ -26,7 +27,7 @@ final class EncryptionManagerFactory
     public static function fromMasterKey(string $masterKey, string $default = 'aes-256-gcm'): EncryptionManager
     {
         if (strlen($masterKey) !== 32) {
-            throw new \InvalidArgumentException('Master key must be exactly 32 bytes.');
+            throw new EncryptionException('Master key must be exactly 32 bytes.');
         }
 
         $registry = new EncryptorRegistry();
@@ -44,14 +45,13 @@ final class EncryptionManagerFactory
         $registry->register(new ZucEncryptor($zucKey));
 
         if (extension_loaded('sodium')) {
+            // sha256 输出恒为 32 字节，即 XChaCha20 的 KEYBYTES，直接注册。
             $sodiumKey = hash_hmac('sha256', $masterKey, 'dgn:derive:sodium', true);
-            if (strlen($sodiumKey) === SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES) {
-                $registry->register(new SodiumXChaCha20Encryptor($sodiumKey));
-            }
+            $registry->register(new SodiumXChaCha20Encryptor($sodiumKey));
         }
 
         if (!$registry->has($default)) {
-            throw new \InvalidArgumentException(sprintf(
+            throw new EncryptionException(sprintf(
                 'Default encryptor "%s" is not available (register ext-sodium for sodium-xchacha20).',
                 $default
             ));

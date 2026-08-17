@@ -45,6 +45,10 @@ final class Sm2AsymmetricCipher implements AsymmetricCipherInterface
 
     public function decrypt(string $ciphertext, string $privateKey): string
     {
+        if (strlen($privateKey) !== 64 || !ctype_xdigit($privateKey)) {
+            throw new EncryptionException('Invalid SM2 private key.');
+        }
+
         try {
             return Sm2EncryptionService::decrypt($ciphertext, $privateKey, $this->cipherOptions);
         } catch (EncryptionException $e) {

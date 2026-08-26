@@ -18,7 +18,7 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 final class Sm3Hasher implements HasherInterface
 {
     public function __construct(
-        private readonly string $identifier = 'sm3',
+        private string $identifier = 'sm3',
     ) {
     }
 

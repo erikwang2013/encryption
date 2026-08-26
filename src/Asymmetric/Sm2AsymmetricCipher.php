@@ -22,8 +22,8 @@ use Erikwang2013\Encryption\Guomi\Sm2EncryptionService;
 final class Sm2AsymmetricCipher implements AsymmetricCipherInterface
 {
     public function __construct(
-        private readonly ?Sm2CipherOptions $cipherOptions = null,
-        private readonly string $identifier = 'sm2',
+        private ?Sm2CipherOptions $cipherOptions = null,
+        private string $identifier = 'sm2',
     ) {
     }
 

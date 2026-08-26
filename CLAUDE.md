@@ -151,6 +151,13 @@ Any string works as a custom agent type.
 npm run build && npm test
 ```
 
+## Release & Push
+
+- 推送前：`vendor/bin/phpunit` 必须全绿（0 失败）；有改动先提交，禁止 `--no-verify`
+- 版本规则：tag 格式 `vX.Y.Z`，基于现有最新 tag 增量（bug 修复 → patch，新功能 → minor，破坏性变更 → major）
+- 每次发布：推 main 后创建增量 tag，并用 `gh release create` 创建同名 GitHub release（内容为本次变更摘要）
+- 本库为 composer 库，**不打包应用**（无 phar/build 产物）；CI 或发布流程中如出现打包步骤，一律取消
+
 ## CLI Quick Reference
 
 ```bash

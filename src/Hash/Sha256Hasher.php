@@ -16,7 +16,7 @@ use Erikwang2013\Encryption\Contract\HasherInterface;
 final class Sha256Hasher implements HasherInterface
 {
     public function __construct(
-        private readonly string $identifier = 'sha256',
+        private string $identifier = 'sha256',
     ) {
     }
 

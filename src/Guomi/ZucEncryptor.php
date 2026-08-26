@@ -27,8 +27,8 @@ final class ZucEncryptor implements EncryptorInterface
     private const PREFIX = 'v1';
 
     public function __construct(
-        private readonly string $key,
-        private readonly string $identifier = 'zuc-128',
+        private string $key,
+        private string $identifier = 'zuc-128',
     ) {
         if (strlen($this->key) !== 16) {
             throw new EncryptionException('ZUC key must be exactly 16 bytes.');

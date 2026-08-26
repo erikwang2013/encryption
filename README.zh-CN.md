@@ -49,11 +49,11 @@ PHP 生态中密码学方案长期分散：Laravel 有自己的 `Crypt`，国密
 
 本库**不依赖**任何 Web 框架，仅以 Composer 包形式提供类与自动加载；在业务项目中 `composer require erikwang2013/encryption` 即可，与路由、容器、配置方式无关。
 
-前提为 **PHP ≥ 8.1** 且满足下文「环境要求」中的扩展与依赖。在此前提下，下列框架版本均可使用（与框架自带加密组件并行，按需注入 `EncryptionManager` 等即可）：
+前提为 **PHP ≥ 8.0** 且满足下文「环境要求」中的扩展与依赖。在此前提下，下列框架版本均可使用（与框架自带加密组件并行，按需注入 `EncryptionManager` 等即可）：
 
 | 框架 | 说明 |
 |------|------|
-| **Laravel** 7 / 8 / 9 / 10 / 11 | 在 **PHP 8.1+** 的运行环境中安装；Laravel 7 若仍停留在 PHP 7.x 或仅 8.0，则无法满足本库 PHP 约束，需先升级运行环境。 |
+| **Laravel** 7 / 8 / 9 / 10 / 11 | 在 **PHP 8.0+** 的运行环境中安装；仅当 Laravel 7 仍停留在 PHP 7.x 时才不满足本库 PHP 约束，需先升级运行环境。 |
 | **ThinkPHP** 6 / 8 | 在 TP 应用的标准 `composer.json` 中 `require` 本包即可。 |
 | **Hyperf** 2 / 3 | 在 Hyperf 服务的 `composer.json` 中引入；按 Hyperf 习惯可在 `config` 或工厂类中注册单例。 |
 | **webman** 1 / 2 | 在 webman 项目根目录执行 `composer require`，在业务类或 `support` 辅助函数中直接使用。 |
@@ -130,7 +130,7 @@ return [
 ## 快速开始
 
 1. 在业务项目根目录执行：`composer require erikwang2013/encryption:^1.0`（或你发布的版本约束）。
-2. 确认 `php -v` 为 **8.1+**，且已启用 `openssl`；若使用 `sodium-xchacha20` 或 SM2，按需安装 `sodium`、`gmp` 扩展。
+2. 确认 `php -v` 为 **8.0+**，且已启用 `openssl`；若使用 `sodium-xchacha20` 或 SM2，按需安装 `sodium`、`gmp` 扩展。
 3. 在代码中 `use Erikwang2013\Encryption\...`，按下文「使用说明」选择 `EncryptionManager`、哈希或 KDF 等类即可。
 
 ---
@@ -190,7 +190,7 @@ flowchart TB
 
 | 项目 | 说明 |
 |------|------|
-| PHP | `^8.1`（与上述框架组合时，以本约束为准） |
+| PHP | `^8.0`（与上述框架组合时，以本约束为准） |
 | 扩展 | `ext-openssl`（必需） |
 | 扩展 | `ext-sodium`（可选，用于 `sodium-xchacha20`） |
 | 扩展 | `ext-gmp`（可选，**SM2** 加解密与密钥生成） |
@@ -414,7 +414,7 @@ SM1、SM7、SM9：`UnavailableNationalAlgorithms::sm1()` 等会抛出 `Unsupport
 
 **Composer 提示 PHP 版本不满足**
 
-本库要求 `php ^8.1`。若业务项目仍使用 PHP 8.0 或更低，需先升级运行环境，或勿使用本包。
+本库要求 `php ^8.0`。若业务项目仍使用 PHP 8.0 或更低，需先升级运行环境，或勿使用本包。
 
 **`sodium-xchacha20` 不可用**
 

@@ -17,7 +17,7 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 final class KeyDerivationManager
 {
     public function __construct(
-        private readonly KeyDerivationRegistry $registry,
+        private KeyDerivationRegistry $registry,
         private string $defaultIdentifier,
     ) {
         if (!$registry->has($defaultIdentifier)) {

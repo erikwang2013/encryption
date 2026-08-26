@@ -17,7 +17,7 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 final class PasswordBasedKdfManager
 {
     public function __construct(
-        private readonly PasswordBasedKdfRegistry $registry,
+        private PasswordBasedKdfRegistry $registry,
         private string $defaultIdentifier,
     ) {
         if (!$registry->has($defaultIdentifier)) {

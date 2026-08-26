@@ -30,8 +30,8 @@ final class Sm4CbcEncryptor implements EncryptorInterface
     private const PREFIX = 'v1';
 
     public function __construct(
-        private readonly string $key,
-        private readonly string $identifier = 'sm4-cbc',
+        private string $key,
+        private string $identifier = 'sm4-cbc',
     ) {
         if (strlen($this->key) !== 16) {
             throw new EncryptionException('SM4 key must be exactly 16 bytes.');

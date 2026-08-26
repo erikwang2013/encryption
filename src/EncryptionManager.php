@@ -17,7 +17,7 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 final class EncryptionManager
 {
     public function __construct(
-        private readonly EncryptorRegistry $registry,
+        private EncryptorRegistry $registry,
         private string $defaultIdentifier,
     ) {
         if (!$registry->has($defaultIdentifier)) {

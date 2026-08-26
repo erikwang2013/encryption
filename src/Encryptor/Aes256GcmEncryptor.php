@@ -22,8 +22,8 @@ final class Aes256GcmEncryptor implements EncryptorInterface
     private const PREFIX = 'v1';
 
     public function __construct(
-        private readonly string $key,
-        private readonly string $identifier = 'aes-256-gcm',
+        private string $key,
+        private string $identifier = 'aes-256-gcm',
     ) {
         if (strlen($this->key) !== self::KEY_LEN) {
             throw new EncryptionException(sprintf('AES-256-GCM key must be exactly %d bytes.', self::KEY_LEN));

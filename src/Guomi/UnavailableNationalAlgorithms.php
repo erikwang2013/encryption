@@ -16,21 +16,21 @@ use Erikwang2013\Encryption\Exception\UnsupportedNationalAlgorithmException;
  */
 final class UnavailableNationalAlgorithms
 {
-    public static function sm1(): never
+    public static function sm1(): void
     {
         throw new UnsupportedNationalAlgorithmException(
             'SM1 为不公开的商用分组密码，请使用国密加密机或芯片厂商提供的 SDK。'
         );
     }
 
-    public static function sm7(): never
+    public static function sm7(): void
     {
         throw new UnsupportedNationalAlgorithmException(
             'SM7 主要用于 RFID 等领域，请使用对应专用设备或厂商接口。'
         );
     }
 
-    public static function sm9(): never
+    public static function sm9(): void
     {
         throw new UnsupportedNationalAlgorithmException(
             'SM9（基于身份的密码）需完整 IBC 协议与密钥管理，请使用国密中间件或专用库集成。'

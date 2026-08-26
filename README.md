@@ -49,11 +49,11 @@ PHP's cryptography landscape is fragmented: Laravel ships its own `Crypt`, Chine
 
 This package **does not depend** on any web framework. It ships as a Composer library with classes and autoloading only. In your application, run `composer require erikwang2013/encryption`; routing, container, and configuration are irrelevant.
 
-You need **PHP ≥ 8.1** and the extensions/dependencies listed under [Requirements](#requirements). With that, the following framework versions work (alongside each framework’s own crypto APIs; inject `EncryptionManager` etc. as needed):
+You need **PHP ≥ 8.0** and the extensions/dependencies listed under [Requirements](#requirements). With that, the following framework versions work (alongside each framework’s own crypto APIs; inject `EncryptionManager` etc. as needed):
 
 | Framework | Notes |
 |-----------|--------|
-| **Laravel** 7 / 8 / 9 / 10 / 11 | Install in a **PHP 8.1+** runtime. If Laravel 7 still runs on PHP 7.x or 8.0 only, this package’s PHP constraint is not satisfied—upgrade PHP first. |
+| **Laravel** 7 / 8 / 9 / 10 / 11 | Install in a **PHP 8.0+** runtime. Only Laravel 7 still running on PHP 7.x falls short of this package’s constraint—upgrade PHP first. |
 | **ThinkPHP** 6 / 8 | Add the package to the app’s standard `composer.json` `require`. |
 | **Hyperf** 2 / 3 | Require in the service’s `composer.json`; register a singleton in `config` or a factory as you usually do in Hyperf. |
 | **webman** 1 / 2 | `composer require` at the project root; use from business classes or `support` helpers. |
@@ -130,7 +130,7 @@ Register `EncryptionManager` on the global `support` container in `config/plugin
 ## Quick start
 
 1. In your project root: `composer require erikwang2013/encryption:^1.0` (or your published version constraint).
-2. Ensure `php -v` is **8.1+** and `openssl` is enabled; for `sodium-xchacha20` or SM2, install the `sodium` and/or `gmp` extensions as needed.
+2. Ensure `php -v` is **8.0+** and `openssl` is enabled; for `sodium-xchacha20` or SM2, install the `sodium` and/or `gmp` extensions as needed.
 3. `use Erikwang2013\Encryption\...` and pick `EncryptionManager`, hashing, KDF, etc. as described under [Usage](#usage).
 
 ---
@@ -190,7 +190,7 @@ Design notes:
 
 | Item | Details |
 |------|---------|
-| PHP | `^8.1` (when combined with frameworks above, this constraint wins) |
+| PHP | `^8.0` (when combined with frameworks above, this constraint wins) |
 | Extension | `ext-openssl` (required) |
 | Extension | `ext-sodium` (optional, for `sodium-xchacha20`) |
 | Extension | `ext-gmp` (optional, **SM2** encryption/decryption and key generation) |
@@ -414,7 +414,7 @@ Namespace prefix: `Erikwang2013\Encryption\`, aligned with Composer `psr-4`.
 
 **Composer reports PHP version mismatch**
 
-This package requires `php ^8.1`. If the app still runs PHP 8.0 or lower, upgrade PHP or do not use this package.
+This package requires `php ^8.0`. If the app still runs PHP 8.0 or lower, upgrade PHP or do not use this package.
 
 **`sodium-xchacha20` unavailable**
 

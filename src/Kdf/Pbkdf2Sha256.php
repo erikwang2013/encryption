@@ -17,8 +17,8 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 final class Pbkdf2Sha256 implements PasswordBasedKdfInterface
 {
     public function __construct(
-        private readonly int $iterations = 310_000,
-        private readonly string $identifier = 'pbkdf2-sha256',
+        private int $iterations = 310_000,
+        private string $identifier = 'pbkdf2-sha256',
     ) {
         if ($this->iterations < 1) {
             throw new EncryptionException('PBKDF2 iterations must be positive.');

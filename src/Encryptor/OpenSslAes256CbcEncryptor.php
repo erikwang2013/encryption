@@ -26,8 +26,8 @@ final class OpenSslAes256CbcEncryptor implements EncryptorInterface
     private const PREFIX = 'v1';
 
     public function __construct(
-        private readonly string $key,
-        private readonly string $identifier = 'aes-256-cbc-hmac',
+        private string $key,
+        private string $identifier = 'aes-256-cbc-hmac',
     ) {
         if (strlen($this->key) !== self::KEY_LEN) {
             throw new EncryptionException(sprintf('AES-256-CBC key must be exactly %d bytes.', self::KEY_LEN));

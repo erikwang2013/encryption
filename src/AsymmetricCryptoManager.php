@@ -17,7 +17,7 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 final class AsymmetricCryptoManager
 {
     public function __construct(
-        private readonly AsymmetricCipherRegistry $registry,
+        private AsymmetricCipherRegistry $registry,
         private string $defaultIdentifier,
     ) {
         if (!$registry->has($defaultIdentifier)) {

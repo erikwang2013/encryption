@@ -17,7 +17,7 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 final class HashingManager
 {
     public function __construct(
-        private readonly HasherRegistry $registry,
+        private HasherRegistry $registry,
         private string $defaultIdentifier,
     ) {
         if (!$registry->has($defaultIdentifier)) {

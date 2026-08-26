@@ -79,8 +79,8 @@ final class ZucEngine
     ];
 
     public function __construct(
-        private readonly string $key,
-        private readonly string $iv,
+        private string $key,
+        private string $iv,
     ) {
         if (strlen($this->key) !== 16 || strlen($this->iv) !== 16) {
             throw new \InvalidArgumentException('ZUC key and IV must be 16 bytes each.');

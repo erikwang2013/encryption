@@ -20,8 +20,8 @@ final class SodiumXChaCha20Encryptor implements EncryptorInterface
     private const PREFIX = 'v1';
 
     public function __construct(
-        private readonly string $key,
-        private readonly string $identifier = 'sodium-xchacha20',
+        private string $key,
+        private string $identifier = 'sodium-xchacha20',
     ) {
         if (!extension_loaded('sodium')) {
             throw new EncryptionException('ext-sodium is required for SodiumXChaCha20Encryptor.');

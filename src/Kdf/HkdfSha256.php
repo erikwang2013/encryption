@@ -17,7 +17,7 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 final class HkdfSha256 implements KeyDerivationInterface
 {
     public function __construct(
-        private readonly string $identifier = 'hkdf-sha256',
+        private string $identifier = 'hkdf-sha256',
     ) {
     }
 

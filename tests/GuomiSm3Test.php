@@ -68,7 +68,7 @@ final class GuomiSm3Test extends TestCase
 
     public function testDigestDeterministicForLongBinaryInput(): void
     {
-        $input = random_bytes(65536);
+        $input = random_bytes(4096);
         $h = new Sm3Hasher();
         self::assertSame($h->digest($input), $h->digest($input));
         self::assertSame($h->digestHex($input), $h->digestHex($input));

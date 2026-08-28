@@ -10,20 +10,12 @@ namespace Erikwang2013\Encryption\Tests;
 
 use Erikwang2013\Encryption\Encryptor\SodiumXChaCha20Encryptor;
 use Erikwang2013\Encryption\Exception\EncryptionException;
-use PHPUnit\Framework\TestCase;
 
 final class SodiumXChaCha20EncryptorTest extends TestCase
 {
-    private function requireSodium(): void
-    {
-        if (!extension_loaded('sodium')) {
-            self::markTestSkipped('ext-sodium not loaded');
-        }
-    }
-
     public function testTamperedCiphertextFailsAuthentication(): void
     {
-        $this->requireSodium();
+        $this->skipWithoutSodium();
         $e = new SodiumXChaCha20Encryptor(random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES));
         $ct = $e->encrypt('authenticated payload');
         // 翻转 nonce 之后第一个密文字节，认证必须失败。
@@ -36,19 +28,16 @@ final class SodiumXChaCha20EncryptorTest extends TestCase
 
     public function testCiphertextDecryptableByNativeSodium(): void
     {
-        $this->requireSodium();
+        $this->skipWithoutSodium();
         $key = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES);
         $e = new SodiumXChaCha20Encryptor($key);
-        $blob = substr($e->encrypt('interop'), strlen('v1'));
-        $n = SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES;
-        $nonce = substr($blob, 0, $n);
-        $ct = substr($blob, $n);
-        self::assertSame('interop', sodium_crypto_aead_xchacha20poly1305_ietf_decrypt($ct, '', $nonce, $key));
+        $parts = $this->splitBlob($e->encrypt('interop'), SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES, 0);
+        self::assertSame('interop', sodium_crypto_aead_xchacha20poly1305_ietf_decrypt($parts['ct'], '', $parts['iv'], $key));
     }
 
     public function testNativeSodiumCiphertextDecryptableByClass(): void
     {
-        $this->requireSodium();
+        $this->skipWithoutSodium();
         $key = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES);
         $e = new SodiumXChaCha20Encryptor($key);
         $nonce = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES);
@@ -59,7 +48,7 @@ final class SodiumXChaCha20EncryptorTest extends TestCase
 
     public function testWrongKeyFails(): void
     {
-        $this->requireSodium();
+        $this->skipWithoutSodium();
         $e = new SodiumXChaCha20Encryptor(random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES));
         $ct = $e->encrypt('secret');
         $other = new SodiumXChaCha20Encryptor(random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES));
@@ -70,7 +59,7 @@ final class SodiumXChaCha20EncryptorTest extends TestCase
 
     public function testEmptyPlaintextRoundTrip(): void
     {
-        $this->requireSodium();
+        $this->skipWithoutSodium();
         $e = new SodiumXChaCha20Encryptor(random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES));
         self::assertSame('', $e->decrypt($e->encrypt('')));
     }

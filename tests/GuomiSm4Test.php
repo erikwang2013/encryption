@@ -13,7 +13,6 @@ use CryptoSm\SM4\Sm4Options;
 use Erikwang2013\Encryption\Contract\EncryptorInterface;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Sm4CbcEncryptor;
-use PHPUnit\Framework\TestCase;
 
 final class GuomiSm4Test extends TestCase
 {
@@ -49,13 +48,13 @@ final class GuomiSm4Test extends TestCase
     {
         $e = new Sm4CbcEncryptor(random_bytes(Sm4CbcEncryptor::KEY_LEN));
         foreach ([0, 16, 17] as $len) {
-            $ct = $e->encrypt(str_repeat('p', $len));
-            self::assertSame('v1', substr($ct, 0, 2));
-            self::assertSame(16, strlen(substr($ct, 2, 16)));          // IV
-            self::assertSame(32, strlen(substr($ct, 18, 32)));         // MAC
-            // 密文区为 PKCS5 填充后的 16 字节整数倍：2 + 16 + 32 + 16*ceil((len+1)/16)
-            $expectedCt = 16 * intdiv($len, 16) + ($len % 16 === 0 ? 16 : 16);
-            self::assertSame(50 + $expectedCt, strlen($ct), "structure mismatch for len {$len}");
+            $parts = $this->splitBlob($e->encrypt(str_repeat('p', $len)));
+            self::assertSame('v1', $parts['prefix']);
+            self::assertSame(16, strlen($parts['iv']));          // IV
+            self::assertSame(32, strlen($parts['mac']));         // MAC
+            // 密文区为 PKCS5 填充后的 16 字节整数倍
+            $expectedCt = 16 * intdiv($len, 16) + 16;
+            self::assertSame($expectedCt, strlen($parts['ct']), "structure mismatch for len {$len}");
         }
     }
 
@@ -65,11 +64,9 @@ final class GuomiSm4Test extends TestCase
         $key = random_bytes(Sm4CbcEncryptor::KEY_LEN);
         $e = new Sm4CbcEncryptor($key);
         $plain = 'cross-check plaintext';
-        $blob = $e->encrypt($plain);
-        $iv = substr($blob, 2, 16);
-        $ct = substr($blob, 50);
-        $options = (new Sm4Options())->setMode(Sm4::MODE_CBC)->setIv(bin2hex($iv))->setPadding('pkcs5');
-        self::assertSame($plain, Sm4::decrypt(bin2hex($ct), bin2hex($key), $options));
+        $parts = $this->splitBlob($e->encrypt($plain));
+        $options = (new Sm4Options())->setMode(Sm4::MODE_CBC)->setIv(bin2hex($parts['iv']))->setPadding('pkcs5');
+        self::assertSame($plain, Sm4::decrypt(bin2hex($parts['ct']), bin2hex($key), $options));
     }
 
     public function testRandomIvProducesDifferentCiphertext(): void

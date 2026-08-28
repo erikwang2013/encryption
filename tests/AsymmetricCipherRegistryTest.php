@@ -8,41 +8,29 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption\Tests;
 
+use Erikwang2013\Encryption\AbstractRegistry;
 use Erikwang2013\Encryption\Asymmetric\Sm2AsymmetricCipher;
 use Erikwang2013\Encryption\AsymmetricCipherRegistry;
-use Erikwang2013\Encryption\Exception\EncryptionException;
-use PHPUnit\Framework\TestCase;
 
-final class AsymmetricCipherRegistryTest extends TestCase
+final class AsymmetricCipherRegistryTest extends AbstractRegistryTestCase
 {
-    public function testDuplicateRegistrationThrows(): void
+    protected function makeItem(?string $identifier = null): object
     {
-        $registry = new AsymmetricCipherRegistry(new Sm2AsymmetricCipher());
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Asymmetric cipher "sm2" is already registered.');
-        $registry->register(new Sm2AsymmetricCipher());
+        return new Sm2AsymmetricCipher(null, $identifier ?? 'sm2');
     }
 
-    public function testUnknownIdentifierMessage(): void
+    protected function makeRegistry(object ...$items): AbstractRegistry
     {
-        $registry = new AsymmetricCipherRegistry();
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Unknown asymmetric cipher: nope');
-        $registry->get('nope');
+        return new AsymmetricCipherRegistry(...$items);
     }
 
-    public function testEmptyIdentifierThrows(): void
+    protected function itemName(): string
     {
-        $registry = new AsymmetricCipherRegistry();
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Asymmetric cipher identifier must not be empty.');
-        $registry->register(new Sm2AsymmetricCipher(null, ''));
+        return 'Asymmetric cipher';
     }
 
-    public function testCustomIdentifierResolution(): void
+    protected function customIdentifier(): string
     {
-        $cipher = new Sm2AsymmetricCipher(null, 'sm2-custom');
-        $registry = new AsymmetricCipherRegistry($cipher);
-        self::assertSame($cipher, $registry->get('sm2-custom'));
+        return 'sm2-custom';
     }
 }

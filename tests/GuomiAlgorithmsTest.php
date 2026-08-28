@@ -17,7 +17,6 @@ use Erikwang2013\Encryption\Guomi\Sm3Hasher;
 use Erikwang2013\Encryption\Guomi\Sm4CbcEncryptor;
 use Erikwang2013\Encryption\Guomi\UnavailableNationalAlgorithms;
 use Erikwang2013\Encryption\Guomi\ZucEncryptor;
-use PHPUnit\Framework\TestCase;
 
 final class GuomiAlgorithmsTest extends TestCase
 {
@@ -176,9 +175,7 @@ final class GuomiAlgorithmsTest extends TestCase
 
     public function testSm2RoundTripWhenGmpAvailable(): void
     {
-        if (!extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp not loaded');
-        }
+        $this->skipWithoutGmp();
         $kp = Sm2EncryptionService::generateKeyPairHex();
         $plain = 'sm2';
         $ct = Sm2EncryptionService::encrypt($plain, $kp->getPublicKey());
@@ -187,9 +184,7 @@ final class GuomiAlgorithmsTest extends TestCase
 
     public function testSm2RequireGmpMessageIsEnglish(): void
     {
-        if (extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp loaded, cannot test missing-gmp message.');
-        }
+        $this->skipIfGmpLoaded();
         $this->expectException(EncryptionException::class);
         $this->expectExceptionMessage('SM2 requires ext-gmp');
         Sm2EncryptionService::requireGmp();

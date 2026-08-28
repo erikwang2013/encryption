@@ -12,30 +12,30 @@ use Erikwang2013\Encryption\Contract\EncryptorInterface;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Internal\ZucEngine;
 use Erikwang2013\Encryption\Guomi\ZucEncryptor;
-use PHPUnit\Framework\TestCase;
 
 final class GuomiZucTest extends TestCase
 {
-    /** 官方/BC 参考向量：key=00×16, iv=00×16 的前 8 个密钥字。 */
-    public function testEngineKatAllZeroKeyAndIvEightWords(): void
+    private function eightWords(ZucEngine $engine): string
     {
-        $engine = new ZucEngine(str_repeat("\x00", 16), str_repeat("\x00", 16));
         $stream = '';
         for ($i = 0; $i < 8; $i++) {
             $stream .= pack('N', $engine->nextKey());
         }
-        self::assertSame('27bede74018082da87d4e5b69f18bf6632070e0f39b7b692b4673edc3184a48e', bin2hex($stream));
+        return $stream;
+    }
+
+    /** 官方/BC 参考向量：key=00×16, iv=00×16 的前 8 个密钥字。 */
+    public function testEngineKatAllZeroKeyAndIvEightWords(): void
+    {
+        $engine = new ZucEngine(str_repeat("\x00", 16), str_repeat("\x00", 16));
+        self::assertSame('27bede74018082da87d4e5b69f18bf6632070e0f39b7b692b4673edc3184a48e', bin2hex($this->eightWords($engine)));
     }
 
     /** 官方/BC 参考向量：key=ff×16, iv=ff×16 的前 8 个密钥字。 */
     public function testEngineKatAllOneKeyAndIvEightWords(): void
     {
         $engine = new ZucEngine(str_repeat("\xff", 16), str_repeat("\xff", 16));
-        $stream = '';
-        for ($i = 0; $i < 8; $i++) {
-            $stream .= pack('N', $engine->nextKey());
-        }
-        self::assertSame('0657cfa07096398b734b6cb4883eedf4257a76eb97595208d884adcdb1cbffb8', bin2hex($stream));
+        self::assertSame('0657cfa07096398b734b6cb4883eedf4257a76eb97595208d884adcdb1cbffb8', bin2hex($this->eightWords($engine)));
     }
 
     public function testEngineDeterministicAcrossInstances(): void
@@ -54,12 +54,7 @@ final class GuomiZucTest extends TestCase
         $key = random_bytes(16);
         $a = new ZucEngine($key, str_repeat("\x00", 16));
         $b = new ZucEngine($key, str_repeat("\x01", 16));
-        $aStream = $bStream = '';
-        for ($i = 0; $i < 8; $i++) {
-            $aStream .= pack('N', $a->nextKey());
-            $bStream .= pack('N', $b->nextKey());
-        }
-        self::assertNotSame($aStream, $bStream);
+        self::assertNotSame($this->eightWords($a), $this->eightWords($b));
     }
 
     public function testEngineNextKeyIsUint32(): void
@@ -122,12 +117,12 @@ final class GuomiZucTest extends TestCase
     {
         $z = new ZucEncryptor(random_bytes(ZucEncryptor::KEY_LEN));
         foreach ([0, 1, 100] as $len) {
-            $ct = $z->encrypt(str_repeat('p', $len));
-            self::assertSame('v1', substr($ct, 0, 2));
-            self::assertSame(16, strlen(substr($ct, 2, 16)));   // IV
-            self::assertSame(32, strlen(substr($ct, 18, 32)));  // MAC
-            // 流密码：密文区与明文等长 → 总长 2 + 16 + 32 + len
-            self::assertSame(50 + $len, strlen($ct), "structure mismatch for len {$len}");
+            $parts = $this->splitBlob($z->encrypt(str_repeat('p', $len)));
+            self::assertSame('v1', $parts['prefix']);
+            self::assertSame(16, strlen($parts['iv']));   // IV
+            self::assertSame(32, strlen($parts['mac']));  // MAC
+            // 流密码：密文区与明文等长
+            self::assertSame($len, strlen($parts['ct']), "structure mismatch for len {$len}");
         }
     }
 

@@ -8,42 +8,40 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption\Tests;
 
-use Erikwang2013\Encryption\Exception\EncryptionException;
+use Erikwang2013\Encryption\AbstractRegistry;
 use Erikwang2013\Encryption\Kdf\HkdfSha256;
 use Erikwang2013\Encryption\KeyDerivationRegistry;
-use PHPUnit\Framework\TestCase;
 
-final class KeyDerivationRegistryTest extends TestCase
+final class KeyDerivationRegistryTest extends AbstractRegistryTestCase
 {
-    public function testDuplicateRegistrationThrows(): void
+    protected function makeItem(?string $identifier = null): object
     {
-        $registry = new KeyDerivationRegistry(new HkdfSha256());
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('KDF "hkdf-sha256" is already registered.');
-        $registry->register(new HkdfSha256());
+        return new HkdfSha256($identifier ?? 'hkdf-sha256');
     }
 
-    public function testUnknownIdentifierMessageKeepsUppercase(): void
+    protected function makeRegistry(object ...$items): AbstractRegistry
     {
-        $registry = new KeyDerivationRegistry();
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Unknown KDF: nope');
-        $registry->get('nope');
+        return new KeyDerivationRegistry(...$items);
     }
 
-    public function testEmptyIdentifierThrows(): void
+    protected function itemName(): string
     {
-        $registry = new KeyDerivationRegistry();
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('KDF identifier must not be empty.');
-        $registry->register(new HkdfSha256(''));
+        return 'KDF';
     }
 
-    public function testCustomIdentifierResolution(): void
+    protected function itemNameLower(): string
     {
-        $kdf = new HkdfSha256('kdf-v2');
-        $registry = new KeyDerivationRegistry($kdf);
-        self::assertSame($kdf, $registry->get('kdf-v2'));
-        self::assertSame(['kdf-v2'], $registry->identifiers());
+        return 'KDF';
+    }
+
+    protected function customIdentifier(): string
+    {
+        return 'kdf-v2';
+    }
+
+    protected function assertCustomIdentifierResolved(AbstractRegistry $registry, object $item): void
+    {
+        self::assertSame($item, $registry->get($this->customIdentifier()));
+        self::assertSame([$this->customIdentifier()], $registry->identifiers());
     }
 }

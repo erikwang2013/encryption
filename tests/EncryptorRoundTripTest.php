@@ -15,7 +15,6 @@ use Erikwang2013\Encryption\EncryptionManager;
 use Erikwang2013\Encryption\EncryptionManagerFactory;
 use Erikwang2013\Encryption\EncryptorRegistry;
 use Erikwang2013\Encryption\Exception\EncryptionException;
-use PHPUnit\Framework\TestCase;
 
 final class EncryptorRoundTripTest extends TestCase
 {
@@ -115,9 +114,7 @@ final class EncryptorRoundTripTest extends TestCase
 
     public function testSodiumRoundTripWhenAvailable(): void
     {
-        if (!extension_loaded('sodium')) {
-            self::markTestSkipped('ext-sodium not loaded');
-        }
+        $this->skipWithoutSodium();
         $key = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES);
         $e = new SodiumXChaCha20Encryptor($key);
         $plain = 'sodium test';
@@ -126,18 +123,14 @@ final class EncryptorRoundTripTest extends TestCase
 
     public function testSodiumWrongKeyLength(): void
     {
-        if (!extension_loaded('sodium')) {
-            self::markTestSkipped('ext-sodium not loaded');
-        }
+        $this->skipWithoutSodium();
         $this->expectException(EncryptionException::class);
         new SodiumXChaCha20Encryptor(random_bytes(16));
     }
 
     public function testSodiumBadPrefix(): void
     {
-        if (!extension_loaded('sodium')) {
-            self::markTestSkipped('ext-sodium not loaded');
-        }
+        $this->skipWithoutSodium();
         $key = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES);
         $e = new SodiumXChaCha20Encryptor($key);
         $this->expectException(EncryptionException::class);
@@ -147,9 +140,7 @@ final class EncryptorRoundTripTest extends TestCase
 
     public function testSodiumBoundarySizes(): void
     {
-        if (!extension_loaded('sodium')) {
-            self::markTestSkipped('ext-sodium not loaded');
-        }
+        $this->skipWithoutSodium();
         $e = new SodiumXChaCha20Encryptor(random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES));
         foreach ([0, 1, 15, 16, 17, 31, 32] as $len) {
             $plain = $len === 0 ? '' : random_bytes($len);

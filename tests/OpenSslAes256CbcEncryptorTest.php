@@ -10,7 +10,6 @@ namespace Erikwang2013\Encryption\Tests;
 
 use Erikwang2013\Encryption\Encryptor\OpenSslAes256CbcEncryptor;
 use Erikwang2013\Encryption\Exception\EncryptionException;
-use PHPUnit\Framework\TestCase;
 
 final class OpenSslAes256CbcEncryptorTest extends TestCase
 {
@@ -18,14 +17,11 @@ final class OpenSslAes256CbcEncryptorTest extends TestCase
     {
         $key = random_bytes(OpenSslAes256CbcEncryptor::KEY_LEN);
         $e = new OpenSslAes256CbcEncryptor($key);
-        $blob = substr($e->encrypt('interop'), strlen('v1'));
-        $iv = substr($blob, 0, OpenSslAes256CbcEncryptor::IV_LEN);
-        $mac = substr($blob, OpenSslAes256CbcEncryptor::IV_LEN, OpenSslAes256CbcEncryptor::MAC_LEN);
-        $ct = substr($blob, OpenSslAes256CbcEncryptor::IV_LEN + OpenSslAes256CbcEncryptor::MAC_LEN);
+        $parts = $this->splitBlob($e->encrypt('interop'));
 
         $macKey = hash_hmac('sha256', $key, 'dgn:enc:hmac', true);
-        self::assertTrue(hash_equals($mac, hash_hmac('sha256', $iv . $ct, $macKey, true)));
-        self::assertSame('interop', openssl_decrypt($ct, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv));
+        self::assertTrue(hash_equals($parts['mac'], hash_hmac('sha256', $parts['iv'] . $parts['ct'], $macKey, true)));
+        self::assertSame('interop', openssl_decrypt($parts['ct'], 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $parts['iv']));
     }
 
     public function testNativeOpensslCiphertextDecryptableByClass(): void

@@ -8,28 +8,56 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption\Tests;
 
+use Erikwang2013\Encryption\AbstractRegistry;
 use Erikwang2013\Encryption\EncryptionManager;
 use Erikwang2013\Encryption\Encryptor\Aes256GcmEncryptor;
 use Erikwang2013\Encryption\Encryptor\OpenSslAes256CbcEncryptor;
 use Erikwang2013\Encryption\EncryptorRegistry;
 use Erikwang2013\Encryption\Exception\EncryptionException;
-use PHPUnit\Framework\TestCase;
 
-final class EncryptionManagerTest extends TestCase
+final class EncryptionManagerTest extends AbstractManagerTestCase
 {
+    protected function makeItem(): object
+    {
+        return new Aes256GcmEncryptor(random_bytes(Aes256GcmEncryptor::KEY_LEN));
+    }
+
+    protected function makeRegistry(object ...$items): AbstractRegistry
+    {
+        return new EncryptorRegistry(...$items);
+    }
+
+    protected function makeManager(object $registry, string $defaultIdentifier): object
+    {
+        return new EncryptionManager($registry, $defaultIdentifier);
+    }
+
+    protected function defaultIdentifier(): string
+    {
+        return 'aes-256-gcm';
+    }
+
+    protected function itemName(): string
+    {
+        return 'Encryptor';
+    }
+
+    protected function boundDefault(object $manager): object
+    {
+        return $manager->defaultEncryptor();
+    }
+
+    protected function dispatchToUnknown(object $manager): void
+    {
+        $manager->encrypt('x', 'nope');
+    }
+
     private function manager(): EncryptionManager
     {
         $gcm = new Aes256GcmEncryptor(random_bytes(Aes256GcmEncryptor::KEY_LEN));
         $cbc = new OpenSslAes256CbcEncryptor(random_bytes(OpenSslAes256CbcEncryptor::KEY_LEN));
 
         return new EncryptionManager(new EncryptorRegistry($gcm, $cbc), 'aes-256-gcm');
-    }
-
-    public function testConstructorRejectsUnregisteredDefault(): void
-    {
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Default encryptor "nope" is not registered.');
-        new EncryptionManager(new EncryptorRegistry(), 'nope');
     }
 
     public function testRoundTripWithDefaultIdentifier(): void
@@ -50,12 +78,6 @@ final class EncryptionManagerTest extends TestCase
         $mgr->decrypt($ct, 'aes-256-gcm');
     }
 
-    public function testDefaultEncryptorReturnsBoundInstance(): void
-    {
-        $mgr = $this->manager();
-        self::assertSame('aes-256-gcm', $mgr->defaultEncryptor()->getIdentifier());
-    }
-
     public function testSetDefaultIdentifierSwitchesRouting(): void
     {
         $mgr = $this->manager();
@@ -64,28 +86,5 @@ final class EncryptionManagerTest extends TestCase
         $plain = 'manager-switch';
         $ct = $mgr->encrypt($plain);
         self::assertSame($plain, $mgr->decrypt($ct));
-    }
-
-    public function testSetDefaultIdentifierToUnknownThrows(): void
-    {
-        $mgr = $this->manager();
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Encryptor "nonexistent" is not registered.');
-        $mgr->setDefaultIdentifier('nonexistent');
-    }
-
-    public function testRegistryReturnsSameInstance(): void
-    {
-        $registry = new EncryptorRegistry(new Aes256GcmEncryptor(random_bytes(Aes256GcmEncryptor::KEY_LEN)));
-        $mgr = new EncryptionManager($registry, 'aes-256-gcm');
-        self::assertSame($registry, $mgr->registry());
-    }
-
-    public function testEncryptWithUnknownIdentifierThrows(): void
-    {
-        $mgr = $this->manager();
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Unknown encryptor: nope');
-        $mgr->encrypt('x', 'nope');
     }
 }

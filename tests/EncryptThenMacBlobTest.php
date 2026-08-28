@@ -113,7 +113,7 @@ final class EncryptThenMacBlobTestDouble
     public const IV_LEN = 16;
     public const MAC_LEN = 32;
 
-    public function __construct(private readonly string $key)
+    public function __construct(private string $key)
     {
     }
 

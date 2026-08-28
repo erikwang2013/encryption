@@ -11,15 +11,12 @@ namespace Erikwang2013\Encryption\Tests;
 use CryptoSm\Exception\CryptoException;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Sm2EncryptionService;
-use PHPUnit\Framework\TestCase;
 
 final class GuomiSm2Test extends TestCase
 {
     public function testRequireGmpThrowsWhenMissing(): void
     {
-        if (extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp loaded, cannot test missing-gmp path.');
-        }
+        $this->skipIfGmpLoaded();
         $this->expectException(EncryptionException::class);
         $this->expectExceptionMessage('SM2 requires ext-gmp.');
         Sm2EncryptionService::requireGmp();
@@ -27,9 +24,7 @@ final class GuomiSm2Test extends TestCase
 
     public function testEncryptThrowsWhenGmpMissing(): void
     {
-        if (extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp loaded, cannot test missing-gmp path.');
-        }
+        $this->skipIfGmpLoaded();
         $this->expectException(EncryptionException::class);
         $this->expectExceptionMessage('SM2 requires ext-gmp.');
         Sm2EncryptionService::encrypt('x', str_repeat('0', 128));
@@ -37,9 +32,7 @@ final class GuomiSm2Test extends TestCase
 
     public function testDecryptThrowsWhenGmpMissing(): void
     {
-        if (extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp loaded, cannot test missing-gmp path.');
-        }
+        $this->skipIfGmpLoaded();
         $this->expectException(EncryptionException::class);
         $this->expectExceptionMessage('SM2 requires ext-gmp.');
         Sm2EncryptionService::decrypt(str_repeat('0', 192), str_repeat('1', 64));
@@ -47,9 +40,7 @@ final class GuomiSm2Test extends TestCase
 
     public function testGenerateKeyPairThrowsWhenGmpMissing(): void
     {
-        if (extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp loaded, cannot test missing-gmp path.');
-        }
+        $this->skipIfGmpLoaded();
         $this->expectException(EncryptionException::class);
         $this->expectExceptionMessage('SM2 requires ext-gmp.');
         Sm2EncryptionService::generateKeyPairHex();
@@ -57,9 +48,7 @@ final class GuomiSm2Test extends TestCase
 
     public function testRoundTripAndKeyStructureWhenGmpAvailable(): void
     {
-        if (!extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp not loaded.');
-        }
+        $this->skipWithoutGmp();
         $pair = Sm2EncryptionService::generateKeyPairHex();
         $priv = $pair->getPrivateKey();
         $pub = $pair->getPublicKey();
@@ -75,9 +64,7 @@ final class GuomiSm2Test extends TestCase
 
     public function testGenerateKeyPairDistinctWhenGmpAvailable(): void
     {
-        if (!extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp not loaded.');
-        }
+        $this->skipWithoutGmp();
         $a = Sm2EncryptionService::generateKeyPairHex();
         $b = Sm2EncryptionService::generateKeyPairHex();
         self::assertNotSame($a->getPrivateKey(), $b->getPrivateKey());
@@ -86,9 +73,7 @@ final class GuomiSm2Test extends TestCase
 
     public function testWrongPrivateKeyNeverYieldsPlaintextWhenGmpAvailable(): void
     {
-        if (!extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp not loaded.');
-        }
+        $this->skipWithoutGmp();
         $pair = Sm2EncryptionService::generateKeyPairHex();
         $other = Sm2EncryptionService::generateKeyPairHex();
         $plain = 'wrong-key attempt';

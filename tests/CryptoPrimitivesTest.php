@@ -23,7 +23,6 @@ use Erikwang2013\Encryption\KeyDerivationManager;
 use Erikwang2013\Encryption\KeyDerivationRegistry;
 use Erikwang2013\Encryption\PasswordBasedKdfManager;
 use Erikwang2013\Encryption\PasswordBasedKdfRegistry;
-use PHPUnit\Framework\TestCase;
 
 final class CryptoPrimitivesTest extends TestCase
 {
@@ -140,9 +139,7 @@ final class CryptoPrimitivesTest extends TestCase
 
     public function testSm2AsymmetricRoundTripWhenGmpAvailable(): void
     {
-        if (!extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp not loaded');
-        }
+        $this->skipWithoutGmp();
         $pair = Sm2EncryptionService::generateKeyPairHex();
         $cipher = new Sm2AsymmetricCipher();
         $plain = 'asymmetric-sm2';
@@ -155,9 +152,7 @@ final class CryptoPrimitivesTest extends TestCase
 
     public function testAsymmetricCryptoManagerSetDefaultIdentifier(): void
     {
-        if (!extension_loaded('gmp')) {
-            self::markTestSkipped('ext-gmp not loaded');
-        }
+        $this->skipWithoutGmp();
         $registry = new AsymmetricCipherRegistry(new Sm2AsymmetricCipher('sm2'), new Sm2AsymmetricCipher('sm2-v2'));
         $mgr = new AsymmetricCryptoManager($registry, 'sm2');
         $pair = Sm2EncryptionService::generateKeyPairHex();

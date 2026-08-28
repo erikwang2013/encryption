@@ -8,42 +8,47 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption\Tests;
 
+use Erikwang2013\Encryption\AbstractRegistry;
 use Erikwang2013\Encryption\Asymmetric\Sm2AsymmetricCipher;
 use Erikwang2013\Encryption\AsymmetricCipherRegistry;
 use Erikwang2013\Encryption\AsymmetricCryptoManager;
-use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Sm2EncryptionService;
-use PHPUnit\Framework\TestCase;
 
-final class AsymmetricCryptoManagerTest extends TestCase
+final class AsymmetricCryptoManagerTest extends AbstractManagerTestCase
 {
-    public function testConstructorRejectsUnregisteredDefault(): void
+    protected function makeItem(): object
     {
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Default asymmetric cipher "nope" is not registered.');
-        new AsymmetricCryptoManager(new AsymmetricCipherRegistry(), 'nope');
+        return new Sm2AsymmetricCipher();
     }
 
-    public function testDefaultCipherReturnsBoundInstance(): void
+    protected function makeRegistry(object ...$items): AbstractRegistry
     {
-        $cipher = new Sm2AsymmetricCipher();
-        $mgr = new AsymmetricCryptoManager(new AsymmetricCipherRegistry($cipher), 'sm2');
-        self::assertSame($cipher, $mgr->defaultCipher());
+        return new AsymmetricCipherRegistry(...$items);
     }
 
-    public function testSetDefaultIdentifierToUnknownThrows(): void
+    protected function makeManager(object $registry, string $defaultIdentifier): object
     {
-        $mgr = new AsymmetricCryptoManager(new AsymmetricCipherRegistry(new Sm2AsymmetricCipher()), 'sm2');
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Asymmetric cipher "nonexistent" is not registered.');
-        $mgr->setDefaultIdentifier('nonexistent');
+        return new AsymmetricCryptoManager($registry, $defaultIdentifier);
     }
 
-    public function testRegistryReturnsSameInstance(): void
+    protected function defaultIdentifier(): string
     {
-        $registry = new AsymmetricCipherRegistry(new Sm2AsymmetricCipher());
-        $mgr = new AsymmetricCryptoManager($registry, 'sm2');
-        self::assertSame($registry, $mgr->registry());
+        return 'sm2';
+    }
+
+    protected function itemName(): string
+    {
+        return 'Asymmetric cipher';
+    }
+
+    protected function boundDefault(object $manager): object
+    {
+        return $manager->defaultCipher();
+    }
+
+    protected function dispatchToUnknown(object $manager): void
+    {
+        $manager->encrypt('x', 'public-key', 'nope');
     }
 
     public function testRoundTripWhenGmpAvailable(): void

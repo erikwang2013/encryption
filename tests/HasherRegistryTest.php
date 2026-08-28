@@ -8,36 +8,31 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption\Tests;
 
-use Erikwang2013\Encryption\Exception\EncryptionException;
+use Erikwang2013\Encryption\AbstractRegistry;
 use Erikwang2013\Encryption\Guomi\Sm3Hasher;
 use Erikwang2013\Encryption\Hash\Sha256Hasher;
 use Erikwang2013\Encryption\HasherRegistry;
-use PHPUnit\Framework\TestCase;
 
-final class HasherRegistryTest extends TestCase
+final class HasherRegistryTest extends AbstractRegistryTestCase
 {
-    public function testDuplicateRegistrationThrows(): void
+    protected function makeItem(?string $identifier = null): object
     {
-        $registry = new HasherRegistry(new Sha256Hasher());
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Hasher "sha256" is already registered.');
-        $registry->register(new Sha256Hasher());
+        return new Sha256Hasher($identifier ?? 'sha256');
     }
 
-    public function testUnknownIdentifierMessage(): void
+    protected function makeRegistry(object ...$items): AbstractRegistry
     {
-        $registry = new HasherRegistry();
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Unknown hasher: nope');
-        $registry->get('nope');
+        return new HasherRegistry(...$items);
     }
 
-    public function testEmptyIdentifierThrows(): void
+    protected function itemName(): string
     {
-        $registry = new HasherRegistry();
-        $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Hasher identifier must not be empty.');
-        $registry->register(new Sha256Hasher(''));
+        return 'Hasher';
+    }
+
+    protected function customIdentifier(): string
+    {
+        return 'custom';
     }
 
     public function testMultipleHashersCoexist(): void

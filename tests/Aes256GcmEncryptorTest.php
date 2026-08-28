@@ -10,7 +10,6 @@ namespace Erikwang2013\Encryption\Tests;
 
 use Erikwang2013\Encryption\Encryptor\Aes256GcmEncryptor;
 use Erikwang2013\Encryption\Exception\EncryptionException;
-use PHPUnit\Framework\TestCase;
 
 final class Aes256GcmEncryptorTest extends TestCase
 {
@@ -18,13 +17,10 @@ final class Aes256GcmEncryptorTest extends TestCase
     {
         $key = random_bytes(Aes256GcmEncryptor::KEY_LEN);
         $e = new Aes256GcmEncryptor($key);
-        $blob = substr($e->encrypt('interop'), strlen('v1'));
-        $iv = substr($blob, 0, Aes256GcmEncryptor::IV_LEN);
-        $tag = substr($blob, Aes256GcmEncryptor::IV_LEN, Aes256GcmEncryptor::TAG_LEN);
-        $ct = substr($blob, Aes256GcmEncryptor::IV_LEN + Aes256GcmEncryptor::TAG_LEN);
-        self::assertSame(12, strlen($iv), 'IV must be 12 bytes');
-        self::assertSame(16, strlen($tag), 'Tag must be 16 bytes');
-        self::assertSame('interop', openssl_decrypt($ct, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag));
+        $parts = $this->splitBlob($e->encrypt('interop'), Aes256GcmEncryptor::IV_LEN, Aes256GcmEncryptor::TAG_LEN);
+        self::assertSame(12, strlen($parts['iv']), 'IV must be 12 bytes');
+        self::assertSame(16, strlen($parts['mac']), 'Tag must be 16 bytes');
+        self::assertSame('interop', openssl_decrypt($parts['ct'], 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $parts['iv'], $parts['mac']));
     }
 
     public function testNativeOpensslCiphertextDecryptableByClass(): void

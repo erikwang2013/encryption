@@ -68,7 +68,7 @@ final class AsymmetricCryptoManagerTest extends AbstractManagerTestCase
             self::markTestSkipped('ext-gmp not loaded');
         }
         $pair = Sm2EncryptionService::generateKeyPairHex();
-        $registry = new AsymmetricCipherRegistry(new Sm2AsymmetricCipher('sm2'), new Sm2AsymmetricCipher('sm2-v2'));
+        $registry = new AsymmetricCipherRegistry(new Sm2AsymmetricCipher(null, 'sm2'), new Sm2AsymmetricCipher(null, 'sm2-v2'));
         $mgr = new AsymmetricCryptoManager($registry, 'sm2');
         $plain = 'asymmetric-routing';
         $ct = $mgr->encrypt($plain, $pair->getPublicKey(), 'sm2-v2');

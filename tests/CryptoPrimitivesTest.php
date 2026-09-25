@@ -153,7 +153,7 @@ final class CryptoPrimitivesTest extends TestCase
     public function testAsymmetricCryptoManagerSetDefaultIdentifier(): void
     {
         $this->skipWithoutGmp();
-        $registry = new AsymmetricCipherRegistry(new Sm2AsymmetricCipher('sm2'), new Sm2AsymmetricCipher('sm2-v2'));
+        $registry = new AsymmetricCipherRegistry(new Sm2AsymmetricCipher(null, 'sm2'), new Sm2AsymmetricCipher(null, 'sm2-v2'));
         $mgr = new AsymmetricCryptoManager($registry, 'sm2');
         $pair = Sm2EncryptionService::generateKeyPairHex();
         $mgr->setDefaultIdentifier('sm2-v2');

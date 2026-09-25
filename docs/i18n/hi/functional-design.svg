@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated from docs/functional-design.svg by scripts/i18n-build-svg.php (hi) — edit docs/i18n/labels/hi.json instead. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 716" width="1000" height="716" role="img" aria-labelledby="featTitle featDesc" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="featTitle">कार्यात्मक डिज़ाइन — erikwang2013/encryption</title>
+  <desc id="featDesc">लाइब्रेरी का क्षमता मानचित्र: सममित एन्क्रिप्शन, असममित एन्क्रिप्शन, हैशिंग, कुंजी व्युत्पत्ति, पासवर्ड-आधारित KDF और चीनी राष्ट्रीय एल्गोरिदम, साथ ही डिज़ाइन सिद्धांत, सुरक्षा डिफ़ॉल्ट और विस्तार का मार्ग।</desc>
+
+  <rect x="0" y="0" width="1000" height="716" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+
+  <text x="40" y="46" font-size="26" font-weight="700" fill="#0F172A">कार्यात्मक डिज़ाइन</text>
+  <text x="40" y="72" font-size="14" fill="#64748B">छह क्षमता परिवार, एक ही संरचना — कॉन्ट्रैक्ट इंटरफ़ेस, रजिस्ट्री, फ़साड, शामिल पहचानकर्ता</text>
+
+  <!-- ══════ card 1 : symmetric ══════ -->
+  <rect x="40" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+  <circle cx="70" cy="130" r="17" fill="#EEF2FF"/>
+  <text x="70" y="136" font-size="15" font-weight="700" fill="#4338CA" text-anchor="middle">S</text>
+  <text x="98" y="126" font-size="14.5" font-weight="700" fill="#0F172A">सममित एन्क्रिप्शन</text>
+  <text x="98" y="144" font-size="10.5" fill="#64748B">EncryptorRegistry · EncryptionManager</text>
+  <line x1="60" y1="166" x2="296" y2="166" stroke="#E2E8F0"/>
+  <rect x="60" y="176" width="93" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="106.5" y="191.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">aes-256-gcm</text>
+  <rect x="161" y="176" width="126" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="224" y="191.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sodium-xchacha20</text>
+  <rect x="60" y="206" width="126" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="123" y="221.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">aes-256-cbc-hmac</text>
+  <rect x="194" y="206" width="66" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="227" y="221.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm4-cbc</text>
+  <rect x="60" y="236" width="66" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="93" y="251.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">zuc-128</text>
+  <text x="60" y="278" font-size="10.9" fill="#475569">प्रति इंस्टेंस एक कुंजी, हर कॉल नया IV।</text>
+  <text x="60" y="292" font-size="11" fill="#475569">बाइनरी पेलोड, AEAD या encrypt-then-MAC</text>
+
+  <!-- ══════ card 2 : asymmetric ══════ -->
+  <rect x="362" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <circle cx="392" cy="130" r="17" fill="#F5F3FF"/>
+  <text x="392" y="136" font-size="15" font-weight="700" fill="#6D28D9" text-anchor="middle">A</text>
+  <text x="420" y="126" font-size="14.5" font-weight="700" fill="#0F172A">असममित एन्क्रिप्शन</text>
+  <text x="420" y="144" font-size="10.5" fill="#64748B">AsymmetricCipherRegistry ·</text>
+  <text x="420" y="157" font-size="10.5" fill="#64748B">AsymmetricCryptoManager</text>
+  <line x1="382" y1="166" x2="618" y2="166" stroke="#E2E8F0"/>
+  <rect x="382" y="176" width="40" height="23" rx="11" fill="#F5F3FF" stroke="#C4B5FD"/>
+  <text x="402" y="191.5" font-size="11" fill="#5B21B6" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm2</text>
+  <text x="382" y="224" font-size="10.7" fill="#475569">हर कॉल पर कुंजी युग्म दिया जाता है —</text>
+  <text x="382" y="238" font-size="8.8" fill="#475569">सार्वजनिक कुंजी से एन्क्रिप्ट, निजी से डिक्रिप्ट।</text>
+  <text x="382" y="252" font-size="9.8" fill="#475569">कुंजियाँ और सिफ़रटेक्स्ट हेक्स स्ट्रिंग में।</text>
+  <text x="382" y="278" font-size="11" fill="#B45309">ext-gmp चाहिए (GMP बड़े पूर्णांक)।</text>
+  <text x="382" y="292" font-size="10.2" fill="#475569">Sm2EncryptionService एक स्टैटिक फ़साड देता है।</text>
+
+  <!-- ══════ card 3 : hashing ══════ -->
+  <rect x="684" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#67E8F9"/>
+  <circle cx="714" cy="130" r="17" fill="#ECFEFF"/>
+  <text x="714" y="136" font-size="15" font-weight="700" fill="#0E7490" text-anchor="middle">H</text>
+  <text x="742" y="126" font-size="14.5" font-weight="700" fill="#0F172A">हैशिंग</text>
+  <text x="742" y="144" font-size="10.5" fill="#64748B">HasherRegistry · HashingManager</text>
+  <line x1="704" y1="166" x2="940" y2="166" stroke="#E2E8F0"/>
+  <rect x="704" y="176" width="60" height="23" rx="11" fill="#ECFEFF" stroke="#67E8F9"/>
+  <text x="734" y="191.5" font-size="11" fill="#155E75" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sha256</text>
+  <rect x="772" y="176" width="40" height="23" rx="11" fill="#ECFEFF" stroke="#67E8F9"/>
+  <text x="792" y="191.5" font-size="11" fill="#155E75" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm3</text>
+  <text x="704" y="224" font-size="9.2" fill="#475569">एकतरफ़ा डाइजेस्ट, बिना कुंजी सामग्री,</text>
+  <text x="704" y="238" font-size="10.7" fill="#475569">दोनों एल्गोरिदम का आउटपुट 32 बाइट।</text>
+  <text x="704" y="252" font-size="9.5" fill="#475569">digest() बाइनरी लौटाता है, digestHex() टेक्स्ट।</text>
+  <text x="704" y="278" font-size="11" fill="#475569">API हस्ताक्षर, अखंडता जाँच के लिए</text>
+  <text x="704" y="292" font-size="11" fill="#475569">और भीतर MAC कुंजियाँ बनाने के लिए।</text>
+
+  <!-- ══════ card 4 : key derivation ══════ -->
+  <rect x="40" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#5EEAD4"/>
+  <circle cx="70" cy="350" r="17" fill="#F0FDFA"/>
+  <text x="70" y="356" font-size="15" font-weight="700" fill="#0F766E" text-anchor="middle">K</text>
+  <text x="98" y="346" font-size="14.5" font-weight="700" fill="#0F172A">कुंजी व्युत्पत्ति (IKM)</text>
+  <text x="98" y="364" font-size="10.5" fill="#64748B">KeyDerivationRegistry ·</text>
+  <text x="98" y="377" font-size="10.5" fill="#64748B">KeyDerivationManager</text>
+  <line x1="60" y1="386" x2="296" y2="386" stroke="#E2E8F0"/>
+  <rect x="60" y="396" width="86" height="23" rx="11" fill="#F0FDFA" stroke="#5EEAD4"/>
+  <text x="103" y="411.5" font-size="11" fill="#115E59" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">hkdf-sha256</text>
+  <text x="60" y="444" font-size="9.6" fill="#475569">RFC 5869 से उच्च-एन्ट्रॉपी का विस्तार</text>
+  <text x="60" y="458" font-size="8.9" fill="#475569">कुंजी सामग्री को प्रयोजन-वार उपकुंजियों में:</text>
+  <text x="60" y="472" font-size="11" fill="#475569">derive($ikm, $salt, $length, $info).</text>
+  <text x="60" y="498" font-size="11" fill="#B45309">इससे पासवर्ड कभी न खींचें।</text>
+  <text x="60" y="512" font-size="11" fill="#475569">PHP hash_hkdf() से लागू।</text>
+
+  <!-- ══════ card 5 : password KDF ══════ -->
+  <rect x="362" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#FCD34D"/>
+  <circle cx="392" cy="350" r="17" fill="#FFFBEB"/>
+  <text x="392" y="356" font-size="15" font-weight="700" fill="#B45309" text-anchor="middle">P</text>
+  <text x="420" y="346" font-size="14.5" font-weight="700" fill="#0F172A">पासवर्ड-आधारित KDF</text>
+  <text x="420" y="364" font-size="10.5" fill="#64748B">PasswordBasedKdfRegistry ·</text>
+  <text x="420" y="377" font-size="10.5" fill="#64748B">PasswordBasedKdfManager</text>
+  <line x1="382" y1="386" x2="618" y2="386" stroke="#E2E8F0"/>
+  <rect x="382" y="396" width="106" height="23" rx="11" fill="#FFFBEB" stroke="#FCD34D"/>
+  <text x="435" y="411.5" font-size="11" fill="#92400E" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">pbkdf2-sha256</text>
+  <text x="382" y="444" font-size="9.8" fill="#475569">मानव पासवर्ड को खींचता है, साथ में</text>
+  <text x="382" y="458" font-size="9.8" fill="#475569">यादृच्छिक साल्ट और निश्चित पुनरावृत्तियाँ</text>
+  <text x="382" y="472" font-size="9.1" fill="#475569">(कंस्ट्रक्टर, डिफ़ॉल्ट रूप से 310 000)।</text>
+  <text x="382" y="498" font-size="9.7" fill="#B45309">साल्ट खाली नहीं हो सकता; वरना अपवाद उठता है।</text>
+  <text x="382" y="512" font-size="10.4" fill="#475569">पासवर्ड भंडारण के लिए Argon2 बेहतर।</text>
+
+  <!-- ══════ card 6 : guomi ══════ -->
+  <rect x="684" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <circle cx="714" cy="350" r="17" fill="#FFF1F2"/>
+  <text x="714" y="356" font-size="15" font-weight="700" fill="#BE123C" text-anchor="middle">G</text>
+  <text x="742" y="346" font-size="14.5" font-weight="700" fill="#0F172A">चीनी राष्ट्रीय क्रिप्टो</text>
+  <text x="742" y="364" font-size="9.7" fill="#64748B">src/Guomi — वही कॉन्ट्रैक्ट</text>
+  <line x1="704" y1="386" x2="940" y2="386" stroke="#E2E8F0"/>
+  <rect x="704" y="396" width="40" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="724" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm2</text>
+  <rect x="752" y="396" width="40" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="772" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm3</text>
+  <rect x="800" y="396" width="66" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="833" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm4-cbc</text>
+  <rect x="874" y="396" width="66" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="907" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">zuc-128</text>
+  <rect x="704" y="426" width="178" height="23" rx="11" fill="#FFFFFF" stroke="#FDA4AF" stroke-dasharray="5 4"/>
+  <text x="793" y="441.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">SM1 / SM7 / SM9 → अपवाद</text>
+  <text x="704" y="474" font-size="11" fill="#475569">गुओमी कोई अलग API नहीं है: रजिस्टर करें</text>
+  <text x="704" y="488" font-size="11" fill="#475569">इम्पलीमेंटेशन और उसे उसी</text>
+  <text x="704" y="502" font-size="8.5" fill="#475569">मैनेजर से कॉल करें जैसे AES या SHA-256।</text>
+
+  <!-- ══════ bottom row ══════ -->
+  <rect x="40" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="60" y="566" font-size="13.5" font-weight="700" fill="#0F172A">डिज़ाइन सिद्धांत</text>
+  <circle cx="66" cy="588" r="2.5" fill="#6366F1"/><text x="78" y="592" font-size="10.3" fill="#475569">प्रति क्षमता एक कॉन्ट्रैक्ट</text>
+  <circle cx="66" cy="607" r="2.5" fill="#6366F1"/><text x="78" y="611" font-size="10.3" fill="#475569">रजिस्ट्री पहचानकर्ता से चुनती है</text>
+  <circle cx="66" cy="626" r="2.5" fill="#6366F1"/><text x="78" y="630" font-size="11" fill="#475569">पेलोड उपसर्ग संस्करणयुक्त (v1)</text>
+  <circle cx="66" cy="645" r="2.5" fill="#6366F1"/><text x="78" y="649" font-size="10.3" fill="#475569">शून्य फ़्रेमवर्क युग्मन</text>
+
+  <rect x="362" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="382" y="566" font-size="13.5" font-weight="700" fill="#0F172A">सुरक्षा डिफ़ॉल्ट</text>
+  <circle cx="388" cy="588" r="2.5" fill="#059669"/><text x="400" y="592" font-size="10.9" fill="#475569">हर कॉल पर यादृच्छिक IV / nonce</text>
+  <circle cx="388" cy="607" r="2.5" fill="#059669"/><text x="400" y="611" font-size="10.9" fill="#475569">AEAD या encrypt-then-MAC</text>
+  <circle cx="388" cy="626" r="2.5" fill="#059669"/><text x="400" y="630" font-size="11" fill="#475569">constant-time hash_equals() जाँच</text>
+  <circle cx="388" cy="645" r="2.5" fill="#059669"/><text x="400" y="649" font-size="9.7" fill="#475569">32-बाइट मास्टर कुंजी अनिवार्य</text>
+
+  <rect x="684" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="704" y="566" font-size="13.5" font-weight="700" fill="#0F172A">विस्तारणीयता — एक एल्गोरिदम जोड़ें</text>
+  <circle cx="710" cy="588" r="2.5" fill="#D97706"/><text x="722" y="592" font-size="9.8" fill="#475569">1. परिवार का कॉन्ट्रैक्ट लागू करें</text>
+  <circle cx="710" cy="607" r="2.5" fill="#D97706"/><text x="722" y="611" font-size="10.7" fill="#475569">2. विशिष्ट पहचानकर्ता लौटाएँ</text>
+  <circle cx="710" cy="626" r="2.5" fill="#D97706"/><text x="722" y="630" font-size="9.4" fill="#475569">3. इसे रजिस्ट्री में रजिस्टर करें</text>
+  <circle cx="710" cy="645" r="2.5" fill="#D97706"/><text x="722" y="649" font-size="10.1" fill="#475569">4. किसी भी फ़साड से रिज़ॉल्व करें</text>
+
+  <text x="40" y="700" font-size="11" fill="#94A3B8">हर परिवार का आकार एक जैसा है, इसलिए नया एल्गोरिदम यानी एक नई क्लास और एक register() कॉल — अनुप्रयोग कोड केवल इंटरफ़ेस पर निर्भर बना रहता है।</text>
+</svg>

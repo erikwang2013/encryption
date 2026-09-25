@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 716" width="1000" height="716" role="img"
+     aria-labelledby="featTitle featDesc"
+     font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="featTitle">Functional design — erikwang2013/encryption</title>
+  <desc id="featDesc">Capability map of the library: symmetric encryption, asymmetric encryption, hashing, key derivation, password-based KDF and Chinese national algorithms, plus design principles, security defaults and the extensibility path.</desc>
+
+  <rect x="0" y="0" width="1000" height="716" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+
+  <text x="40" y="46" font-size="26" font-weight="700" fill="#0F172A">Functional design</text>
+  <text x="40" y="72" font-size="14" fill="#64748B">Six capability families sharing one structure — contract interface, registry, facade, shipped identifiers</text>
+
+  <!-- ══════ card 1 : symmetric ══════ -->
+  <rect x="40" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+  <circle cx="70" cy="130" r="17" fill="#EEF2FF"/>
+  <text x="70" y="136" font-size="15" font-weight="700" fill="#4338CA" text-anchor="middle">S</text>
+  <text x="98" y="126" font-size="14.5" font-weight="700" fill="#0F172A">Symmetric encryption</text>
+  <text x="98" y="144" font-size="10.5" fill="#64748B">EncryptorRegistry · EncryptionManager</text>
+  <line x1="60" y1="166" x2="296" y2="166" stroke="#E2E8F0"/>
+  <rect x="60" y="176" width="93" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="106.5" y="191.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">aes-256-gcm</text>
+  <rect x="161" y="176" width="126" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="224" y="191.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sodium-xchacha20</text>
+  <rect x="60" y="206" width="126" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="123" y="221.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">aes-256-cbc-hmac</text>
+  <rect x="194" y="206" width="66" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="227" y="221.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm4-cbc</text>
+  <rect x="60" y="236" width="66" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="93" y="251.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">zuc-128</text>
+  <text x="60" y="278" font-size="11" fill="#475569">One key per instance, random IV per call.</text>
+  <text x="60" y="292" font-size="11" fill="#475569">Binary payloads, AEAD or encrypt-then-MAC</text>
+
+  <!-- ══════ card 2 : asymmetric ══════ -->
+  <rect x="362" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <circle cx="392" cy="130" r="17" fill="#F5F3FF"/>
+  <text x="392" y="136" font-size="15" font-weight="700" fill="#6D28D9" text-anchor="middle">A</text>
+  <text x="420" y="126" font-size="14.5" font-weight="700" fill="#0F172A">Asymmetric encryption</text>
+  <text x="420" y="144" font-size="10.5" fill="#64748B">AsymmetricCipherRegistry ·</text>
+  <text x="420" y="157" font-size="10.5" fill="#64748B">AsymmetricCryptoManager</text>
+  <line x1="382" y1="166" x2="618" y2="166" stroke="#E2E8F0"/>
+  <rect x="382" y="176" width="40" height="23" rx="11" fill="#F5F3FF" stroke="#C4B5FD"/>
+  <text x="402" y="191.5" font-size="11" fill="#5B21B6" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm2</text>
+  <text x="382" y="224" font-size="11" fill="#475569">Key pair is passed in on every call —</text>
+  <text x="382" y="238" font-size="11" fill="#475569">public key to encrypt, private to decrypt.</text>
+  <text x="382" y="252" font-size="11" fill="#475569">Keys and ciphertext travel as hex strings.</text>
+  <text x="382" y="278" font-size="11" fill="#B45309">Requires ext-gmp (GMP big integers).</text>
+  <text x="382" y="292" font-size="11" fill="#475569">Sm2EncryptionService offers a static facade.</text>
+
+  <!-- ══════ card 3 : hashing ══════ -->
+  <rect x="684" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#67E8F9"/>
+  <circle cx="714" cy="130" r="17" fill="#ECFEFF"/>
+  <text x="714" y="136" font-size="15" font-weight="700" fill="#0E7490" text-anchor="middle">H</text>
+  <text x="742" y="126" font-size="14.5" font-weight="700" fill="#0F172A">Hashing</text>
+  <text x="742" y="144" font-size="10.5" fill="#64748B">HasherRegistry · HashingManager</text>
+  <line x1="704" y1="166" x2="940" y2="166" stroke="#E2E8F0"/>
+  <rect x="704" y="176" width="60" height="23" rx="11" fill="#ECFEFF" stroke="#67E8F9"/>
+  <text x="734" y="191.5" font-size="11" fill="#155E75" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sha256</text>
+  <rect x="772" y="176" width="40" height="23" rx="11" fill="#ECFEFF" stroke="#67E8F9"/>
+  <text x="792" y="191.5" font-size="11" fill="#155E75" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm3</text>
+  <text x="704" y="224" font-size="11" fill="#475569">One-way digests, no key material,</text>
+  <text x="704" y="238" font-size="11" fill="#475569">32-byte output for both algorithms.</text>
+  <text x="704" y="252" font-size="11" fill="#475569">digest() returns binary, digestHex() text.</text>
+  <text x="704" y="278" font-size="11" fill="#475569">Used for API signing, integrity checks</text>
+  <text x="704" y="292" font-size="11" fill="#475569">and for deriving MAC keys internally.</text>
+
+  <!-- ══════ card 4 : key derivation ══════ -->
+  <rect x="40" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#5EEAD4"/>
+  <circle cx="70" cy="350" r="17" fill="#F0FDFA"/>
+  <text x="70" y="356" font-size="15" font-weight="700" fill="#0F766E" text-anchor="middle">K</text>
+  <text x="98" y="346" font-size="14.5" font-weight="700" fill="#0F172A">Key derivation (IKM)</text>
+  <text x="98" y="364" font-size="10.5" fill="#64748B">KeyDerivationRegistry ·</text>
+  <text x="98" y="377" font-size="10.5" fill="#64748B">KeyDerivationManager</text>
+  <line x1="60" y1="386" x2="296" y2="386" stroke="#E2E8F0"/>
+  <rect x="60" y="396" width="86" height="23" rx="11" fill="#F0FDFA" stroke="#5EEAD4"/>
+  <text x="103" y="411.5" font-size="11" fill="#115E59" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">hkdf-sha256</text>
+  <text x="60" y="444" font-size="11" fill="#475569">RFC 5869 expansion of high-entropy</text>
+  <text x="60" y="458" font-size="11" fill="#475569">key material into per-purpose subkeys:</text>
+  <text x="60" y="472" font-size="11" fill="#475569">derive($ikm, $salt, $length, $info).</text>
+  <text x="60" y="498" font-size="11" fill="#B45309">Never use it to stretch passwords.</text>
+  <text x="60" y="512" font-size="11" fill="#475569">Implemented with PHP hash_hkdf().</text>
+
+  <!-- ══════ card 5 : password KDF ══════ -->
+  <rect x="362" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#FCD34D"/>
+  <circle cx="392" cy="350" r="17" fill="#FFFBEB"/>
+  <text x="392" y="356" font-size="15" font-weight="700" fill="#B45309" text-anchor="middle">P</text>
+  <text x="420" y="346" font-size="14.5" font-weight="700" fill="#0F172A">Password-based KDF</text>
+  <text x="420" y="364" font-size="10.5" fill="#64748B">PasswordBasedKdfRegistry ·</text>
+  <text x="420" y="377" font-size="10.5" fill="#64748B">PasswordBasedKdfManager</text>
+  <line x1="382" y1="386" x2="618" y2="386" stroke="#E2E8F0"/>
+  <rect x="382" y="396" width="106" height="23" rx="11" fill="#FFFBEB" stroke="#FCD34D"/>
+  <text x="435" y="411.5" font-size="11" fill="#92400E" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">pbkdf2-sha256</text>
+  <text x="382" y="444" font-size="11" fill="#475569">Stretches human passwords with a</text>
+  <text x="382" y="458" font-size="11" fill="#475569">random salt and a fixed iteration count</text>
+  <text x="382" y="472" font-size="11" fill="#475569">(constructor, 310 000 by default).</text>
+  <text x="382" y="498" font-size="11" fill="#B45309">Salt must not be empty; raises otherwise.</text>
+  <text x="382" y="512" font-size="11" fill="#475569">For password storage prefer Argon2.</text>
+
+  <!-- ══════ card 6 : guomi ══════ -->
+  <rect x="684" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <circle cx="714" cy="350" r="17" fill="#FFF1F2"/>
+  <text x="714" y="356" font-size="15" font-weight="700" fill="#BE123C" text-anchor="middle">G</text>
+  <text x="742" y="346" font-size="14.5" font-weight="700" fill="#0F172A">Chinese national crypto</text>
+  <text x="742" y="364" font-size="10.5" fill="#64748B">src/Guomi — same contracts</text>
+  <line x1="704" y1="386" x2="940" y2="386" stroke="#E2E8F0"/>
+  <rect x="704" y="396" width="40" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="724" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm2</text>
+  <rect x="752" y="396" width="40" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="772" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm3</text>
+  <rect x="800" y="396" width="66" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="833" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm4-cbc</text>
+  <rect x="874" y="396" width="66" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="907" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">zuc-128</text>
+  <rect x="704" y="426" width="178" height="23" rx="11" fill="#FFFFFF" stroke="#FDA4AF" stroke-dasharray="5 4"/>
+  <text x="793" y="441.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">SM1 / SM7 / SM9 → exception</text>
+  <text x="704" y="474" font-size="11" fill="#475569">Guomi is not a separate API: register the</text>
+  <text x="704" y="488" font-size="11" fill="#475569">implementation and call it through the</text>
+  <text x="704" y="502" font-size="11" fill="#475569">same manager as AES or SHA-256.</text>
+
+  <!-- ══════ bottom row ══════ -->
+  <rect x="40" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="60" y="566" font-size="13.5" font-weight="700" fill="#0F172A">Design principles</text>
+  <circle cx="66" cy="588" r="2.5" fill="#6366F1"/><text x="78" y="592" font-size="11" fill="#475569">One contract per capability</text>
+  <circle cx="66" cy="607" r="2.5" fill="#6366F1"/><text x="78" y="611" font-size="11" fill="#475569">Registries resolve by identifier</text>
+  <circle cx="66" cy="626" r="2.5" fill="#6366F1"/><text x="78" y="630" font-size="11" fill="#475569">Payload prefix is versioned (v1)</text>
+  <circle cx="66" cy="645" r="2.5" fill="#6366F1"/><text x="78" y="649" font-size="11" fill="#475569">Zero framework coupling</text>
+
+  <rect x="362" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="382" y="566" font-size="13.5" font-weight="700" fill="#0F172A">Security defaults</text>
+  <circle cx="388" cy="588" r="2.5" fill="#059669"/><text x="400" y="592" font-size="11" fill="#475569">Random IV / nonce on every call</text>
+  <circle cx="388" cy="607" r="2.5" fill="#059669"/><text x="400" y="611" font-size="11" fill="#475569">AEAD or encrypt-then-MAC</text>
+  <circle cx="388" cy="626" r="2.5" fill="#059669"/><text x="400" y="630" font-size="11" fill="#475569">Constant-time hash_equals() check</text>
+  <circle cx="388" cy="645" r="2.5" fill="#059669"/><text x="400" y="649" font-size="11" fill="#475569">32-byte master key enforced</text>
+
+  <rect x="684" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="704" y="566" font-size="13.5" font-weight="700" fill="#0F172A">Extensibility — add an algorithm</text>
+  <circle cx="710" cy="588" r="2.5" fill="#D97706"/><text x="722" y="592" font-size="11" fill="#475569">1. Implement the family contract</text>
+  <circle cx="710" cy="607" r="2.5" fill="#D97706"/><text x="722" y="611" font-size="11" fill="#475569">2. Return a unique identifier</text>
+  <circle cx="710" cy="626" r="2.5" fill="#D97706"/><text x="722" y="630" font-size="11" fill="#475569">3. Register it in the registry</text>
+  <circle cx="710" cy="645" r="2.5" fill="#D97706"/><text x="722" y="649" font-size="11" fill="#475569">4. Resolve it through any facade</text>
+
+  <text x="40" y="700" font-size="11" fill="#94A3B8">Every family follows the same shape, so a new algorithm is a new class plus one register() call — application code keeps depending on interfaces only.</text>
+</svg>

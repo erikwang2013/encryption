@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" width="1000" height="660" role="img"
+     aria-labelledby="lifeTitle lifeDesc"
+     font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="lifeTitle">Request lifecycle — erikwang2013/encryption</title>
+  <desc id="lifeDesc">Lifecycle of a protected value: provision a 32-byte master key, derive per-algorithm subkeys, register implementations, encrypt with a random IV, persist the versioned blob, then resolve, verify and decrypt; plus rotation and failure modes.</desc>
+
+  <defs>
+    <marker id="lcArw" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="660" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+
+  <text x="40" y="46" font-size="26" font-weight="700" fill="#0F172A">Request lifecycle</text>
+  <text x="40" y="72" font-size="14" fill="#64748B">From master key to plaintext and back — bootstrap, encryption write path, decryption read path, rotation and failure modes</text>
+
+  <text x="40" y="104" font-size="11" fill="#94A3B8" letter-spacing="1">WRITE PATH</text>
+  <text x="40" y="308" font-size="11" fill="#94A3B8" letter-spacing="1">READ PATH</text>
+
+  <!-- ═══ write path ═══ -->
+  <g>
+    <rect x="40" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="66" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="66" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">1</text>
+    <text x="90" y="149" font-size="14.5" font-weight="700" fill="#0F172A">Provision</text>
+    <line x1="60" y1="168" x2="225" y2="168" stroke="#E2E8F0"/>
+    <text x="60" y="194" font-size="11" fill="#475569">32-byte key from env or KMS,</text>
+    <text x="60" y="212" font-size="11" fill="#475569">never a raw password.</text>
+    <text x="60" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">base64_decode($envKey)</text>
+  </g>
+  <line x1="245" y1="185" x2="272" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="278" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="304" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="304" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">2</text>
+    <text x="328" y="149" font-size="14.5" font-weight="700" fill="#0F172A">Derive</text>
+    <line x1="298" y1="168" x2="463" y2="168" stroke="#E2E8F0"/>
+    <text x="298" y="194" font-size="11" fill="#475569">One subkey per algorithm,</text>
+    <text x="298" y="212" font-size="11" fill="#475569">so keys never get reused.</text>
+    <text x="298" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">dgn:derive:aes-gcm</text>
+  </g>
+  <line x1="483" y1="185" x2="510" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="516" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="542" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="542" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">3</text>
+    <text x="566" y="149" font-size="14.5" font-weight="700" fill="#0F172A">Register</text>
+    <line x1="536" y1="168" x2="701" y2="168" stroke="#E2E8F0"/>
+    <text x="536" y="194" font-size="11" fill="#475569">Implementation stored under</text>
+    <text x="536" y="212" font-size="11" fill="#475569">its own getIdentifier().</text>
+    <text x="536" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$registry-&gt;register($cipher)</text>
+  </g>
+  <line x1="721" y1="185" x2="748" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="754" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="780" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="780" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">4</text>
+    <text x="804" y="149" font-size="14.5" font-weight="700" fill="#0F172A">Encrypt</text>
+    <line x1="774" y1="168" x2="939" y2="168" stroke="#E2E8F0"/>
+    <text x="774" y="194" font-size="11" fill="#475569">Random IV / nonce per call,</text>
+    <text x="774" y="212" font-size="11" fill="#475569">AEAD tag or encrypt-then-MAC.</text>
+    <text x="774" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$manager-&gt;encrypt($data)</text>
+  </g>
+
+  <!-- wrap to read path -->
+  <path d="M856 258 V278 H142 V310" fill="none" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+
+  <!-- ═══ read path ═══ -->
+  <g>
+    <rect x="40" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="66" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="66" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">5</text>
+    <text x="90" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Persist</text>
+    <line x1="60" y1="372" x2="225" y2="372" stroke="#E2E8F0"/>
+    <text x="60" y="398" font-size="11" fill="#475569">Binary blob in a BLOB column,</text>
+    <text x="60" y="416" font-size="11" fill="#475569">or base64 for text storage.</text>
+    <text x="60" y="440" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">v1 | IV | tag | ciphertext</text>
+  </g>
+  <line x1="245" y1="389" x2="272" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="278" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="304" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="304" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">6</text>
+    <text x="328" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Resolve</text>
+    <line x1="298" y1="372" x2="463" y2="372" stroke="#E2E8F0"/>
+    <text x="298" y="398" font-size="11" fill="#475569">The identifier stored with the</text>
+    <text x="298" y="416" font-size="11" fill="#475569">record selects the implementation,</text>
+    <text x="298" y="434" font-size="11" fill="#475569">so old data keeps decrypting.</text>
+  </g>
+  <line x1="483" y1="389" x2="510" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="516" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="542" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="542" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">7</text>
+    <text x="566" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Verify</text>
+    <line x1="536" y1="372" x2="701" y2="372" stroke="#E2E8F0"/>
+    <text x="536" y="398" font-size="11" fill="#475569">Prefix and length are checked</text>
+    <text x="536" y="416" font-size="11" fill="#475569">before the tag / MAC is compared</text>
+    <text x="536" y="434" font-size="11" fill="#475569">in constant time.</text>
+    <text x="536" y="452" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">hash_equals()</text>
+  </g>
+  <line x1="721" y1="389" x2="748" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="754" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="780" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="780" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">8</text>
+    <text x="804" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Decrypt</text>
+    <line x1="774" y1="372" x2="939" y2="372" stroke="#E2E8F0"/>
+    <text x="774" y="398" font-size="11" fill="#475569">Plaintext goes back to the caller;</text>
+    <text x="774" y="416" font-size="11" fill="#475569">on failure the details are not</text>
+    <text x="774" y="434" font-size="11" fill="#475569">leaked to the client.</text>
+  </g>
+
+  <!-- ═══ maintenance & failures ═══ -->
+  <text x="40" y="492" font-size="11" fill="#94A3B8" letter-spacing="1">MAINTENANCE &amp; FAILURE MODES</text>
+  <rect x="40" y="504" width="440" height="112" rx="14" fill="#FFF7ED" stroke="#FDBA74"/>
+  <text x="60" y="532" font-size="13.5" font-weight="700" fill="#9A3412">Rotation &amp; migration</text>
+  <circle cx="66" cy="554" r="2.5" fill="#F59E0B"/><text x="78" y="558" font-size="11" fill="#7C2D12">Keep the identifier (and v1 prefix) next to every record</text>
+  <circle cx="66" cy="573" r="2.5" fill="#F59E0B"/><text x="78" y="577" font-size="11" fill="#7C2D12">Decrypt with the old key, re-encrypt with the new one</text>
+  <circle cx="66" cy="592" r="2.5" fill="#F59E0B"/><text x="78" y="596" font-size="11" fill="#7C2D12">setDefaultIdentifier() switches the default, call sites untouched</text>
+
+  <rect x="520" y="504" width="440" height="112" rx="14" fill="#FEF2F2" stroke="#FCA5A5"/>
+  <text x="540" y="532" font-size="13.5" font-weight="700" fill="#991B1B">Failures raise EncryptionException</text>
+  <circle cx="546" cy="554" r="2.5" fill="#EF4444"/><text x="558" y="558" font-size="11" fill="#7F1D1D">Invalid prefix, ciphertext too short</text>
+  <circle cx="546" cy="573" r="2.5" fill="#EF4444"/><text x="558" y="577" font-size="11" fill="#7F1D1D">Tag or MAC mismatch — tampering or the wrong key</text>
+  <circle cx="546" cy="592" r="2.5" fill="#EF4444"/><text x="558" y="596" font-size="11" fill="#7F1D1D">Unknown identifier, unregistered algorithm, bad key length</text>
+
+  <text x="40" y="644" font-size="11" fill="#94A3B8">Bootstrap happens once per process (the factory registers every encryptor at once); encrypt and decrypt are the per-request hot path.</text>
+</svg>

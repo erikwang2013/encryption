@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated from docs/functional-design.svg by scripts/i18n-build-svg.php (ar) — edit docs/i18n/labels/ar.json instead. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 716" width="1000" height="716" role="img" aria-labelledby="featTitle featDesc" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="featTitle">التصميم الوظيفي — erikwang2013/encryption</title>
+  <desc id="featDesc">خريطة إمكانات المكتبة: التشفير المتماثل، والتشفير غير المتماثل، والتجزئة، واشتقاق المفاتيح، والاشتقاق من كلمات المرور، والخوارزميات الوطنية الصينية، إضافة إلى مبادئ التصميم والإعدادات الآمنة الافتراضية ومسار التوسّع.</desc>
+
+  <rect x="0" y="0" width="1000" height="716" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+
+  <text x="40" y="46" font-size="26" font-weight="700" fill="#0F172A">التصميم الوظيفي</text>
+  <text x="40" y="72" font-size="14" fill="#64748B">ست عائلات إمكانات تشترك في بنية واحدة — واجهة العقد، والسجل، والواجهة، والمعرّفات المضمّنة</text>
+
+  <!-- ══════ card 1 : symmetric ══════ -->
+  <rect x="40" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+  <circle cx="70" cy="130" r="17" fill="#EEF2FF"/>
+  <text x="70" y="136" font-size="15" font-weight="700" fill="#4338CA" text-anchor="middle">S</text>
+  <text x="98" y="126" font-size="14.5" font-weight="700" fill="#0F172A">التشفير المتماثل</text>
+  <text x="98" y="144" font-size="10.5" fill="#64748B">EncryptorRegistry · EncryptionManager</text>
+  <line x1="60" y1="166" x2="296" y2="166" stroke="#E2E8F0"/>
+  <rect x="60" y="176" width="93" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="106.5" y="191.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">aes-256-gcm</text>
+  <rect x="161" y="176" width="126" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="224" y="191.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sodium-xchacha20</text>
+  <rect x="60" y="206" width="126" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="123" y="221.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">aes-256-cbc-hmac</text>
+  <rect x="194" y="206" width="66" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="227" y="221.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm4-cbc</text>
+  <rect x="60" y="236" width="66" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="93" y="251.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">zuc-128</text>
+  <text x="60" y="278" font-size="9.5" fill="#475569">مفتاح واحد لكل نسخة، و IV عشوائي لكل استدعاء.</text>
+  <text x="60" y="292" font-size="11" fill="#475569">حمولات ثنائية، AEAD أو encrypt-then-MAC</text>
+
+  <!-- ══════ card 2 : asymmetric ══════ -->
+  <rect x="362" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <circle cx="392" cy="130" r="17" fill="#F5F3FF"/>
+  <text x="392" y="136" font-size="15" font-weight="700" fill="#6D28D9" text-anchor="middle">A</text>
+  <text x="420" y="126" font-size="14.5" font-weight="700" fill="#0F172A">التشفير غير المتماثل</text>
+  <text x="420" y="144" font-size="10.5" fill="#64748B">AsymmetricCipherRegistry ·</text>
+  <text x="420" y="157" font-size="10.5" fill="#64748B">AsymmetricCryptoManager</text>
+  <line x1="382" y1="166" x2="618" y2="166" stroke="#E2E8F0"/>
+  <rect x="382" y="176" width="40" height="23" rx="11" fill="#F5F3FF" stroke="#C4B5FD"/>
+  <text x="402" y="191.5" font-size="11" fill="#5B21B6" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm2</text>
+  <text x="382" y="224" font-size="10.6" fill="#475569">يُمرَّر زوج المفاتيح في كل استدعاء —</text>
+  <text x="382" y="238" font-size="10.3" fill="#475569">المفتاح العام للتشفير، والخاص لفك التشفير.</text>
+  <text x="382" y="252" font-size="11" fill="#475569">المفاتيح والنص المشفَّر بصيغة ست عشرية.</text>
+  <text x="382" y="278" font-size="9" fill="#B45309">تتطلب ext-gmp (أعداد GMP الصحيحة الكبيرة).</text>
+  <text x="382" y="292" font-size="11" fill="#475569">يوفّر Sm2EncryptionService واجهة ثابتة.</text>
+
+  <!-- ══════ card 3 : hashing ══════ -->
+  <rect x="684" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#67E8F9"/>
+  <circle cx="714" cy="130" r="17" fill="#ECFEFF"/>
+  <text x="714" y="136" font-size="15" font-weight="700" fill="#0E7490" text-anchor="middle">H</text>
+  <text x="742" y="126" font-size="14.5" font-weight="700" fill="#0F172A">التجزئة</text>
+  <text x="742" y="144" font-size="10.5" fill="#64748B">HasherRegistry · HashingManager</text>
+  <line x1="704" y1="166" x2="940" y2="166" stroke="#E2E8F0"/>
+  <rect x="704" y="176" width="60" height="23" rx="11" fill="#ECFEFF" stroke="#67E8F9"/>
+  <text x="734" y="191.5" font-size="11" fill="#155E75" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sha256</text>
+  <rect x="772" y="176" width="40" height="23" rx="11" fill="#ECFEFF" stroke="#67E8F9"/>
+  <text x="792" y="191.5" font-size="11" fill="#155E75" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm3</text>
+  <text x="704" y="224" font-size="9.5" fill="#475569">بصمات أحادية الاتجاه دون مادة مفتاح،</text>
+  <text x="704" y="238" font-size="11" fill="#475569">خرج بطول 32 بايت للخوارزميتين.</text>
+  <text x="704" y="252" font-size="8.9" fill="#475569">يُعيد digest() بيانات ثنائية، و digestHex() نصًّا.</text>
+  <text x="704" y="278" font-size="11" fill="#475569">تُستخدم لتوقيع API وفحوص السلامة</text>
+  <text x="704" y="292" font-size="11" fill="#475569">ولاشتقاق مفاتيح MAC داخليًا.</text>
+
+  <!-- ══════ card 4 : key derivation ══════ -->
+  <rect x="40" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#5EEAD4"/>
+  <circle cx="70" cy="350" r="17" fill="#F0FDFA"/>
+  <text x="70" y="356" font-size="15" font-weight="700" fill="#0F766E" text-anchor="middle">K</text>
+  <text x="98" y="346" font-size="14.5" font-weight="700" fill="#0F172A">اشتقاق المفاتيح (IKM)</text>
+  <text x="98" y="364" font-size="10.5" fill="#64748B">KeyDerivationRegistry ·</text>
+  <text x="98" y="377" font-size="10.5" fill="#64748B">KeyDerivationManager</text>
+  <line x1="60" y1="386" x2="296" y2="386" stroke="#E2E8F0"/>
+  <rect x="60" y="396" width="86" height="23" rx="11" fill="#F0FDFA" stroke="#5EEAD4"/>
+  <text x="103" y="411.5" font-size="11" fill="#115E59" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">hkdf-sha256</text>
+  <text x="60" y="444" font-size="11" fill="#475569">توسيع RFC 5869 لمادة مفاتيح</text>
+  <text x="60" y="458" font-size="9.6" fill="#475569">عالية العشوائية إلى مفاتيح فرعية لكل غرض:</text>
+  <text x="60" y="472" font-size="11" fill="#475569">derive($ikm, $salt, $length, $info).</text>
+  <text x="60" y="498" font-size="10" fill="#B45309">لا تستخدمه أبدًا لمدّ كلمات المرور.</text>
+  <text x="60" y="512" font-size="11" fill="#475569">مُنفَّذة عبر hash_hkdf() في PHP.</text>
+
+  <!-- ══════ card 5 : password KDF ══════ -->
+  <rect x="362" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#FCD34D"/>
+  <circle cx="392" cy="350" r="17" fill="#FFFBEB"/>
+  <text x="392" y="356" font-size="15" font-weight="700" fill="#B45309" text-anchor="middle">P</text>
+  <text x="420" y="346" font-size="14.5" font-weight="700" fill="#0F172A">اشتقاق كلمات المرور</text>
+  <text x="420" y="364" font-size="10.5" fill="#64748B">PasswordBasedKdfRegistry ·</text>
+  <text x="420" y="377" font-size="10.5" fill="#64748B">PasswordBasedKdfManager</text>
+  <line x1="382" y1="386" x2="618" y2="386" stroke="#E2E8F0"/>
+  <rect x="382" y="396" width="106" height="23" rx="11" fill="#FFFBEB" stroke="#FCD34D"/>
+  <text x="435" y="411.5" font-size="11" fill="#92400E" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">pbkdf2-sha256</text>
+  <text x="382" y="444" font-size="11" fill="#475569">يمدّ كلمات المرور البشرية بـ</text>
+  <text x="382" y="458" font-size="11" fill="#475569">ملح عشوائي وعدد تكرارات ثابت</text>
+  <text x="382" y="472" font-size="11" fill="#475569">(في الباني، 310 000 افتراضيًا).</text>
+  <text x="382" y="498" font-size="9.4" fill="#B45309">يجب ألا يكون الملح فارغًا؛ وإلا رفع استثناءً.</text>
+  <text x="382" y="512" font-size="11" fill="#475569">لتخزين كلمات المرور فضّل Argon2.</text>
+
+  <!-- ══════ card 6 : guomi ══════ -->
+  <rect x="684" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <circle cx="714" cy="350" r="17" fill="#FFF1F2"/>
+  <text x="714" y="356" font-size="15" font-weight="700" fill="#BE123C" text-anchor="middle">G</text>
+  <text x="742" y="346" font-size="14.5" font-weight="700" fill="#0F172A">التشفير الوطني الصيني</text>
+  <text x="742" y="364" font-size="10.5" fill="#64748B">src/Guomi — العقود نفسها</text>
+  <line x1="704" y1="386" x2="940" y2="386" stroke="#E2E8F0"/>
+  <rect x="704" y="396" width="40" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="724" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm2</text>
+  <rect x="752" y="396" width="40" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="772" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm3</text>
+  <rect x="800" y="396" width="66" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="833" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm4-cbc</text>
+  <rect x="874" y="396" width="66" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="907" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">zuc-128</text>
+  <rect x="704" y="426" width="178" height="23" rx="11" fill="#FFFFFF" stroke="#FDA4AF" stroke-dasharray="5 4"/>
+  <text x="793" y="441.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">SM1 / SM7 / SM9 → استثناء</text>
+  <text x="704" y="474" font-size="11" fill="#475569">Guomi ليس واجهة منفصلة: سجّل</text>
+  <text x="704" y="488" font-size="11" fill="#475569">التطبيق واستدعِه عبر</text>
+  <text x="704" y="502" font-size="8.5" fill="#475569">المدير نفسه المستخدم مع AES أو SHA-256.</text>
+
+  <!-- ══════ bottom row ══════ -->
+  <rect x="40" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="60" y="566" font-size="13.5" font-weight="700" fill="#0F172A">مبادئ التصميم</text>
+  <circle cx="66" cy="588" r="2.5" fill="#6366F1"/><text x="78" y="592" font-size="11" fill="#475569">عقد واحد لكل إمكانية</text>
+  <circle cx="66" cy="607" r="2.5" fill="#6366F1"/><text x="78" y="611" font-size="11" fill="#475569">السجلات تحلّ بالمعرّف</text>
+  <circle cx="66" cy="626" r="2.5" fill="#6366F1"/><text x="78" y="630" font-size="10.7" fill="#475569">بادئة الحمولة تحمل إصدارًا (v1)</text>
+  <circle cx="66" cy="645" r="2.5" fill="#6366F1"/><text x="78" y="649" font-size="10.8" fill="#475569">لا ارتباط بأي إطار عمل</text>
+
+  <rect x="362" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="382" y="566" font-size="13.5" font-weight="700" fill="#0F172A">افتراضيات الأمان</text>
+  <circle cx="388" cy="588" r="2.5" fill="#059669"/><text x="400" y="592" font-size="10.6" fill="#475569">IV / nonce عشوائي في كل استدعاء</text>
+  <circle cx="388" cy="607" r="2.5" fill="#059669"/><text x="400" y="611" font-size="10.9" fill="#475569">AEAD أو encrypt-then-MAC</text>
+  <circle cx="388" cy="626" r="2.5" fill="#059669"/><text x="400" y="630" font-size="11" fill="#475569">مقارنة hash_equals() بزمن ثابت</text>
+  <circle cx="388" cy="645" r="2.5" fill="#059669"/><text x="400" y="649" font-size="10" fill="#475569">فرض مفتاح رئيسي بطول 32 بايت</text>
+
+  <rect x="684" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="704" y="566" font-size="13.5" font-weight="700" fill="#0F172A">التوسّع — إضافة خوارزمية</text>
+  <circle cx="710" cy="588" r="2.5" fill="#D97706"/><text x="722" y="592" font-size="11" fill="#475569">1. طبّق عقد العائلة</text>
+  <circle cx="710" cy="607" r="2.5" fill="#D97706"/><text x="722" y="611" font-size="11" fill="#475569">2. أعِد معرّفًا فريدًا</text>
+  <circle cx="710" cy="626" r="2.5" fill="#D97706"/><text x="722" y="630" font-size="11" fill="#475569">3. سجّله في السجل</text>
+  <circle cx="710" cy="645" r="2.5" fill="#D97706"/><text x="722" y="649" font-size="11" fill="#475569">4. احلّه عبر أي واجهة</text>
+
+  <text x="40" y="700" font-size="11" fill="#94A3B8">تتبع كل عائلة الشكل نفسه، لذا فإضافة خوارزمية تقتصر على صنف جديد واستدعاء واحد لـ register() — ويظل كود التطبيق معتمدًا على الواجهات وحدها.</text>
+</svg>

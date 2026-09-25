@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated from docs/lifecycle.svg by scripts/i18n-build-svg.php (bn) — edit docs/i18n/labels/bn.json instead. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" width="1000" height="660" role="img" aria-labelledby="lifeTitle lifeDesc" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="lifeTitle">রিকোয়েস্ট লাইফসাইকেল — erikwang2013/encryption</title>
+  <desc id="lifeDesc">একটি সুরক্ষিত মানের জীবনচক্র: ৩২ বাইটের মাস্টার কী সংগ্রহ, প্রতি অ্যালগরিদমের সাব-কী ডেরিভেশন, ইমপ্লিমেন্টেশন রেজিস্টার, র্যান্ডম IV দিয়ে এনক্রিপশন, ভার্সনযুক্ত ব্লব সংরক্ষণ, তারপর রিজলভ, যাচাই ও ডিক্রিপশন; সঙ্গে রোটেশন ও ব্যর্থতার ধরন।</desc>
+
+  <defs>
+    <marker id="lcArw" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="660" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+
+  <text x="40" y="46" font-size="26" font-weight="700" fill="#0F172A">রিকোয়েস্ট লাইফসাইকেল</text>
+  <text x="40" y="72" font-size="14" fill="#64748B">মাস্টার কী থেকে প্লেইনটেক্সটে ও ফিরে — বুটস্ট্র্যাপ, এনক্রিপশন রাইট পাথ, ডিক্রিপশন রিড পাথ, রোটেশন ও ব্যর্থতার ধরন</text>
+
+  <text x="40" y="104" font-size="11" fill="#94A3B8" letter-spacing="1">রাইট পাথ</text>
+  <text x="40" y="308" font-size="11" fill="#94A3B8" letter-spacing="1">রিড পাথ</text>
+
+  <!-- ═══ write path ═══ -->
+  <g>
+    <rect x="40" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="66" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="66" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">1</text>
+    <text x="90" y="149" font-size="14.5" font-weight="700" fill="#0F172A">প্রোভিশন</text>
+    <line x1="60" y1="168" x2="225" y2="168" stroke="#E2E8F0"/>
+    <text x="60" y="194" font-size="10.2" fill="#475569">env বা KMS থেকে ৩২ বাইটের কী,</text>
+    <text x="60" y="212" font-size="8.5" fill="#475569">কখনও কাঁচা পাসওয়ার্ড নয়।</text>
+    <text x="60" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">base64_decode($envKey)</text>
+  </g>
+  <line x1="245" y1="185" x2="272" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="278" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="304" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="304" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">2</text>
+    <text x="328" y="149" font-size="14.5" font-weight="700" fill="#0F172A">ডেরাইভ</text>
+    <line x1="298" y1="168" x2="463" y2="168" stroke="#E2E8F0"/>
+    <text x="298" y="194" font-size="8.6" fill="#475569">প্রতি অ্যালগরিদমে একটি সাব-কী,</text>
+    <text x="298" y="212" font-size="8.5" fill="#475569">ফলে কী কখনও পুনর্ব্যবহৃত হয় না।</text>
+    <text x="298" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">dgn:derive:aes-gcm</text>
+  </g>
+  <line x1="483" y1="185" x2="510" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="516" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="542" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="542" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">3</text>
+    <text x="566" y="149" font-size="14.5" font-weight="700" fill="#0F172A">রেজিস্টার</text>
+    <line x1="536" y1="168" x2="701" y2="168" stroke="#E2E8F0"/>
+    <text x="536" y="194" font-size="10.3" fill="#475569">ইমপ্লিমেন্টেশন সংরক্ষিত হয়</text>
+    <text x="536" y="212" font-size="9.2" fill="#475569">নিজের getIdentifier() দিয়ে।</text>
+    <text x="536" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$registry-&gt;register($cipher)</text>
+  </g>
+  <line x1="721" y1="185" x2="748" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="754" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="780" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="780" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">4</text>
+    <text x="804" y="149" font-size="14.5" font-weight="700" fill="#0F172A">এনক্রিপ্ট</text>
+    <line x1="774" y1="168" x2="939" y2="168" stroke="#E2E8F0"/>
+    <text x="774" y="194" font-size="9.5" fill="#475569">প্রতি কলে র্যান্ডম IV / nonce,</text>
+    <text x="774" y="212" font-size="10.1" fill="#475569">AEAD ট্যাগ বা encrypt-then-MAC।</text>
+    <text x="774" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$manager-&gt;encrypt($data)</text>
+  </g>
+
+  <!-- wrap to read path -->
+  <path d="M856 258 V278 H142 V310" fill="none" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+
+  <!-- ═══ read path ═══ -->
+  <g>
+    <rect x="40" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="66" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="66" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">5</text>
+    <text x="90" y="353" font-size="14.5" font-weight="700" fill="#0F172A">পার্সিস্ট</text>
+    <line x1="60" y1="372" x2="225" y2="372" stroke="#E2E8F0"/>
+    <text x="60" y="398" font-size="11" fill="#475569">BLOB কলামে বাইনারি ব্লব,</text>
+    <text x="60" y="416" font-size="11" fill="#475569">বা টেক্সটে রাখতে base64।</text>
+    <text x="60" y="440" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">v1 | IV | tag | ciphertext</text>
+  </g>
+  <line x1="245" y1="389" x2="272" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="278" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="304" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="304" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">6</text>
+    <text x="328" y="353" font-size="14.5" font-weight="700" fill="#0F172A">রিজলভ</text>
+    <line x1="298" y1="372" x2="463" y2="372" stroke="#E2E8F0"/>
+    <text x="298" y="398" font-size="11" fill="#475569">রেকর্ডের সঙ্গে সংরক্ষিত</text>
+    <text x="298" y="416" font-size="8.5" fill="#475569">আইডেন্টিফায়ারই ইমপ্লিমেন্টেশন বেছে নেয়,</text>
+    <text x="298" y="434" font-size="8.5" fill="#475569">তাই পুরনো ডেটা ডিক্রিপ্ট হয়েই থাকে।</text>
+  </g>
+  <line x1="483" y1="389" x2="510" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="516" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="542" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="542" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">7</text>
+    <text x="566" y="353" font-size="14.5" font-weight="700" fill="#0F172A">যাচাই</text>
+    <line x1="536" y1="372" x2="701" y2="372" stroke="#E2E8F0"/>
+    <text x="536" y="398" font-size="10.3" fill="#475569">প্রিফিক্স ও দৈর্ঘ্য যাচাই হয়</text>
+    <text x="536" y="416" font-size="11" fill="#475569">ট্যাগ / MAC তুলনার আগে,</text>
+    <text x="536" y="434" font-size="9.7" fill="#475569">কনস্ট্যান্ট-টাইমে।</text>
+    <text x="536" y="452" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">hash_equals()</text>
+  </g>
+  <line x1="721" y1="389" x2="748" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="754" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="780" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="780" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">8</text>
+    <text x="804" y="353" font-size="14.5" font-weight="700" fill="#0F172A">ডিক্রিপ্ট</text>
+    <line x1="774" y1="372" x2="939" y2="372" stroke="#E2E8F0"/>
+    <text x="774" y="398" font-size="10" fill="#475569">প্লেইনটেক্সট ফেরত যায় কলারের কাছে;</text>
+    <text x="774" y="416" font-size="11" fill="#475569">ব্যর্থ হলে বিস্তারিত কিছু</text>
+    <text x="774" y="434" font-size="9" fill="#475569">ক্লায়েন্টে ফাঁস হয় না।</text>
+  </g>
+
+  <!-- ═══ maintenance & failures ═══ -->
+  <text x="40" y="492" font-size="11" fill="#94A3B8" letter-spacing="1">রক্ষণাবেক্ষণ ও ব্যর্থতার ধরন</text>
+  <rect x="40" y="504" width="440" height="112" rx="14" fill="#FFF7ED" stroke="#FDBA74"/>
+  <text x="60" y="532" font-size="13.5" font-weight="700" fill="#9A3412">রোটেশন ও মাইগ্রেশন</text>
+  <circle cx="66" cy="554" r="2.5" fill="#F59E0B"/><text x="78" y="558" font-size="9.8" fill="#7C2D12">প্রতিটি রেকর্ডের পাশে আইডেন্টিফায়ার (ও v1 প্রিফিক্স) রাখুন</text>
+  <circle cx="66" cy="573" r="2.5" fill="#F59E0B"/><text x="78" y="577" font-size="9.6" fill="#7C2D12">পুরনো কী দিয়ে ডিক্রিপ্ট, নতুন কী দিয়ে পুনরায় এনক্রিপ্ট</text>
+  <circle cx="66" cy="592" r="2.5" fill="#F59E0B"/><text x="78" y="596" font-size="11" fill="#7C2D12">setDefaultIdentifier() ডিফল্ট বদলায়, কল সাইট অপরিবর্তিত</text>
+
+  <rect x="520" y="504" width="440" height="112" rx="14" fill="#FEF2F2" stroke="#FCA5A5"/>
+  <text x="540" y="532" font-size="13.5" font-weight="700" fill="#991B1B">ব্যর্থতায় EncryptionException ছোড়ে</text>
+  <circle cx="546" cy="554" r="2.5" fill="#EF4444"/><text x="558" y="558" font-size="10.3" fill="#7F1D1D">অবৈধ প্রিফিক্স, সাইফারটেক্সট খুব ছোট</text>
+  <circle cx="546" cy="573" r="2.5" fill="#EF4444"/><text x="558" y="577" font-size="11" fill="#7F1D1D">ট্যাগ বা MAC মিলছে না — টেম্পারিং বা ভুল কী</text>
+  <circle cx="546" cy="592" r="2.5" fill="#EF4444"/><text x="558" y="596" font-size="10.3" fill="#7F1D1D">অজানা আইডেন্টিফায়ার, অনিবন্ধিত অ্যালগরিদম, ভুল কী দৈর্ঘ্য</text>
+
+  <text x="40" y="644" font-size="9.7" fill="#94A3B8">বুটস্ট্র্যাপ হয় প্রক্রিয়া-প্রতি একবার (ফ্যাক্টরি একবারেই সব এনক্রিপ্টর রেজিস্টার করে); এনক্রিপ্ট ও ডিক্রিপ্ট হলো প্রতি-রিকোয়েস্টের হট পাথ।</text>
+</svg>

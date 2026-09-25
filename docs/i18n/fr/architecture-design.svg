@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated from docs/architecture-design.svg by scripts/i18n-build-svg.php (fr) — edit docs/i18n/labels/fr.json instead. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 810" width="1000" height="810" role="img" aria-labelledby="archTitle archDesc" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="archTitle">Conception de l'architecture — erikwang2013/encryption</title>
+  <desc id="archDesc">Quatre familles de capacités (symétrique, asymétrique, hachage, dérivation de clés), chacune composée d'une interface de contrat, d'un registre, d'un manager de façade et d'implémentations d'algorithmes, plus la factory de clé maîtresse et les internes transverses.</desc>
+
+  <defs>
+    <marker id="arwDown" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+    <marker id="arwUp" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#34D399"/>
+    </marker>
+    <marker id="arwRail" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#F59E0B"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="810" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+
+  <!-- ═══ header ═══ -->
+  <text x="40" y="46" font-size="26" font-weight="700" fill="#0F172A">Architecture du projet</text>
+  <text x="40" y="72" font-size="13.6" fill="#64748B">Quatre familles de capacités · contrat → registre → façade → implémentation · namespace Erikwang2013\Encryption</text>
+
+  <!-- ═══ application band ═══ -->
+  <rect x="204" y="92" width="770" height="52" rx="12" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="224" y="115" font-size="14" font-weight="700" fill="#0F172A">Code applicatif</text>
+  <text x="224" y="133" font-size="11.1" fill="#475569">Laravel · ThinkPHP · Hyperf · webman · PHP seul — ne dépend que des contrats et des façades, jamais d'un algorithme concret</text>
+
+  <!-- gap 1 -->
+  <text x="589" y="164" font-size="11" fill="#64748B" text-anchor="middle">① l'application appelle la façade — <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$manager-&gt;encrypt($data, 'aes-256-gcm')</tspan></text>
+  <line x1="292" y1="174" x2="292" y2="192" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+  <line x1="490" y1="174" x2="490" y2="192" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+  <line x1="688" y1="174" x2="688" y2="192" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+  <line x1="886" y1="174" x2="886" y2="192" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+
+  <!-- ═══ facades ═══ -->
+  <g>
+    <rect x="204" y="196" width="176" height="64" rx="12" fill="#EEF2FF" stroke="#A5B4FC"/>
+    <text x="220" y="220" font-size="13" font-weight="700" fill="#312E81">EncryptionManager</text>
+    <text x="220" y="238" font-size="10.5" fill="#4338CA">encrypt() / decrypt()</text>
+    <text x="220" y="252" font-size="10.1" fill="#6366F1">lie un identifiant par défaut</text>
+
+    <rect x="402" y="196" width="176" height="64" rx="12" fill="#EEF2FF" stroke="#A5B4FC"/>
+    <text x="418" y="220" font-size="13" font-weight="700" fill="#312E81">AsymmetricCryptoManager</text>
+    <text x="418" y="238" font-size="10.5" fill="#4338CA">encrypt(plain, publicKey)</text>
+    <text x="418" y="252" font-size="10.5" fill="#4338CA">decrypt(cipher, privateKey)</text>
+
+    <rect x="600" y="196" width="176" height="64" rx="12" fill="#EEF2FF" stroke="#A5B4FC"/>
+    <text x="616" y="220" font-size="13" font-weight="700" fill="#312E81">HashingManager</text>
+    <text x="616" y="238" font-size="10.5" fill="#4338CA">digest() / digestHex()</text>
+    <text x="616" y="252" font-size="9.2" fill="#6366F1">à sens unique, aucune clé</text>
+
+    <rect x="798" y="196" width="176" height="64" rx="12" fill="#EEF2FF" stroke="#A5B4FC"/>
+    <text x="814" y="216" font-size="11.5" font-weight="700" fill="#312E81">KeyDerivationManager</text>
+    <text x="814" y="232" font-size="11.5" font-weight="700" fill="#312E81">PasswordBasedKdfManager</text>
+    <text x="814" y="250" font-size="10.5" fill="#4338CA">derive() / deriveFromPassword()</text>
+  </g>
+
+  <!-- gap 2 -->
+  <text x="589" y="282" font-size="11.2" fill="#64748B" text-anchor="middle">② la façade résout l'implémentation par identifiant — <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$registry-&gt;get($id)</tspan>, un id inconnu → erreur</text>
+  <line x1="292" y1="292" x2="292" y2="310" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+  <line x1="490" y1="292" x2="490" y2="310" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+  <line x1="688" y1="292" x2="688" y2="310" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+  <line x1="886" y1="292" x2="886" y2="310" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+
+  <!-- ═══ registries ═══ -->
+  <g>
+    <rect x="204" y="314" width="176" height="58" rx="12" fill="#ECFEFF" stroke="#67E8F9"/>
+    <text x="220" y="338" font-size="13" font-weight="700" fill="#155E75">EncryptorRegistry</text>
+    <text x="220" y="356" font-size="10.5" fill="#0E7490">register · has · get · identifiers</text>
+
+    <rect x="402" y="314" width="176" height="58" rx="12" fill="#ECFEFF" stroke="#67E8F9"/>
+    <text x="418" y="338" font-size="12" font-weight="700" fill="#155E75">AsymmetricCipherRegistry</text>
+    <text x="418" y="356" font-size="9.8" fill="#0E7490">point d'extension : chiffreurs</text>
+
+    <rect x="600" y="314" width="176" height="58" rx="12" fill="#ECFEFF" stroke="#67E8F9"/>
+    <text x="616" y="338" font-size="13" font-weight="700" fill="#155E75">HasherRegistry</text>
+    <text x="616" y="356" font-size="9.8" fill="#0E7490">point d'extension : empreintes</text>
+
+    <rect x="798" y="314" width="176" height="58" rx="12" fill="#ECFEFF" stroke="#67E8F9"/>
+    <text x="814" y="334" font-size="11.5" font-weight="700" fill="#155E75">KeyDerivationRegistry</text>
+    <text x="814" y="350" font-size="11.5" font-weight="700" fill="#155E75">PasswordBasedKdfRegistry</text>
+    <text x="814" y="366" font-size="9.3" fill="#0E7490">base AbstractRegistry partagée</text>
+  </g>
+
+  <!-- gap 3 -->
+  <text x="589" y="388" font-size="11.1" fill="#64748B" text-anchor="middle">③ chaque implémentation est enregistrée sous son propre <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">getIdentifier()</tspan> — réenregistrer un id est refusé</text>
+  <line x1="292" y1="402" x2="292" y2="420" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+  <line x1="490" y1="402" x2="490" y2="420" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+  <line x1="688" y1="402" x2="688" y2="420" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+  <line x1="886" y1="402" x2="886" y2="420" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arwDown)"/>
+
+  <!-- ═══ contracts ═══ -->
+  <g stroke-dasharray="7 5">
+    <rect x="204" y="424" width="176" height="70" rx="12" fill="#F0FDF4" stroke="#86EFAC"/>
+    <rect x="402" y="424" width="176" height="70" rx="12" fill="#F0FDF4" stroke="#86EFAC"/>
+    <rect x="600" y="424" width="176" height="70" rx="12" fill="#F0FDF4" stroke="#86EFAC"/>
+    <rect x="798" y="424" width="176" height="70" rx="12" fill="#F0FDF4" stroke="#86EFAC"/>
+  </g>
+  <g fill="#166534">
+    <text x="220" y="448" font-size="12" font-weight="700">SymmetricCipherInterface</text>
+    <text x="220" y="466" font-size="10.1">alias : EncryptorInterface</text>
+    <text x="402.5" y="448" font-size="12" font-weight="700">AsymmetricCipherInterface</text>
+    <text x="616" y="448" font-size="12" font-weight="700">HasherInterface</text>
+    <text x="616" y="466" font-size="10.5" fill="#15803D">digest() · digestHex()</text>
+    <text x="814" y="444" font-size="11.5" font-weight="700">KeyDerivationInterface</text>
+    <text x="814" y="462" font-size="11.5" font-weight="700">PasswordBasedKdfInterface</text>
+  </g>
+  <text x="402.5" y="466" font-size="8.8" fill="#15803D">matériel de clé par appel</text>
+  <text x="814" y="478" font-size="10" fill="#15803D">IKM vs mot de passe</text>
+
+  <!-- gap 4 -->
+  <text x="589" y="514" font-size="10.3" fill="#64748B" text-anchor="middle">④ les implémentations satisfont le contrat — ajoutez ou changez d'algorithme sans toucher au code applicatif</text>
+  <line x1="292" y1="540" x2="292" y2="520" stroke="#34D399" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arwUp)"/>
+  <line x1="490" y1="540" x2="490" y2="520" stroke="#34D399" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arwUp)"/>
+  <line x1="688" y1="540" x2="688" y2="520" stroke="#34D399" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arwUp)"/>
+  <line x1="886" y1="540" x2="886" y2="520" stroke="#34D399" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arwUp)"/>
+
+  <!-- ═══ implementations ═══ -->
+  <g font-size="11.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" fill="#334155">
+    <rect x="204" y="546" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="292" y="563.5">aes-256-gcm</text>
+    <rect x="204" y="582" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="292" y="599.5">sodium-xchacha20</text>
+    <rect x="204" y="618" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="292" y="635.5">aes-256-cbc-hmac</text>
+    <rect x="204" y="654" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="292" y="671.5">sm4-cbc</text>
+    <rect x="204" y="690" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="292" y="707.5">zuc-128</text>
+
+    <rect x="402" y="546" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="490" y="563.5">sm2</text>
+
+    <rect x="600" y="546" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="688" y="563.5">sha256</text>
+    <rect x="600" y="582" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="688" y="599.5">sm3</text>
+
+    <rect x="798" y="546" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="886" y="563.5">hkdf-sha256</text>
+    <rect x="798" y="582" width="176" height="26" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="886" y="599.5">pbkdf2-sha256</text>
+  </g>
+  <g font-size="10.5" fill="#94A3B8" text-anchor="middle">
+    <text x="292" y="733">blob encrypt-then-MAC · v1 | IV | tag/MAC | ciphertext</text>
+    <text x="490" y="588" font-size="9.8">nécessite ext-gmp</text>
+    <text x="490" y="604" font-size="9.7">clés et texte chiffré en hex</text>
+    <text x="688" y="622" font-size="8.5">empreintes 32 octets</text>
+    <text x="886" y="622" font-size="9.8">sel aléatoire · base64 en texte</text>
+  </g>
+
+  <!-- ═══ factory rail ═══ -->
+  <rect x="24" y="196" width="164" height="298" rx="12" fill="#FFF7ED" stroke="#FDBA74"/>
+  <text x="38" y="222" font-size="12" font-weight="700" fill="#9A3412">EncryptionManager</text>
+  <text x="38" y="237" font-size="12" font-weight="700" fill="#9A3412">Factory</text>
+  <text x="38" y="258" font-size="9.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#C2410C">fromMasterKey(</text>
+  <text x="38" y="271" font-size="9.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#C2410C">  $master32, $default)</text>
+  <text x="38" y="294" font-size="10" fill="#7C2D12">Dérive une sous-clé par</text>
+  <text x="38" y="308" font-size="10.1" fill="#7C2D12">algorithme avec HMAC-SHA256</text>
+  <text x="38" y="322" font-size="9.8" fill="#7C2D12">(libellé info distinct), puis</text>
+  <text x="38" y="336" font-size="9.5" fill="#7C2D12">enregistre tous les chiffreurs</text>
+  <text x="38" y="350" font-size="8.9" fill="#7C2D12">d'un coup et renvoie un manager.</text>
+  <text x="38" y="374" font-size="9.6" fill="#C2410C">La clé maîtresse doit faire</text>
+  <text x="38" y="387" font-size="8.5" fill="#C2410C">exactement 32 octets, sinon erreur</text>
+  <text x="38" y="411" font-size="8.8" fill="#C2410C">ext-sodium ajoute</text>
+  <text x="38" y="424" font-size="10" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#C2410C">sodium-xchacha20</text>
+  <text x="38" y="437" font-size="8.8" fill="#C2410C">automatiquement.</text>
+  <text x="38" y="461" font-size="10" fill="#C2410C">SM2 exige ext-gmp.</text>
+  <line x1="188" y1="343" x2="200" y2="343" stroke="#F59E0B" stroke-width="2" marker-end="url(#arwRail)"/>
+
+  <!-- ═══ cross-cutting ═══ -->
+  <rect x="204" y="752" width="770" height="46" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-dasharray="7 5"/>
+  <text x="220" y="771" font-size="11" fill="#475569">Transversal : <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#334155">src/Internal/EncryptThenMacBlob.php</tspan> (trait encrypt-then-MAC) · <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#334155">src/Exception/</tspan></text>
+  <text x="220" y="789" font-size="10.8" fill="#475569"><tspan font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#334155">EncryptionException</tspan> (toutes les erreurs) · <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#334155">UnsupportedNationalAlgorithmException</tspan> (SM1 / SM7 / SM9 non fournis)</text>
+</svg>

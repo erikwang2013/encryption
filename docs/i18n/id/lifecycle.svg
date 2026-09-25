@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated from docs/lifecycle.svg by scripts/i18n-build-svg.php (id) — edit docs/i18n/labels/id.json instead. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" width="1000" height="660" role="img" aria-labelledby="lifeTitle lifeDesc" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="lifeTitle">Siklus hidup permintaan — erikwang2013/encryption</title>
+  <desc id="lifeDesc">Siklus hidup nilai yang dilindungi: siapkan kunci utama 32 byte, turunkan subkunci per algoritma, daftarkan implementasi, enkripsi dengan IV acak, simpan blob berversi, lalu pilih, verifikasi, dan dekripsi; ditambah rotasi dan mode kegagalan.</desc>
+
+  <defs>
+    <marker id="lcArw" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="660" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+
+  <text x="40" y="46" font-size="26" font-weight="700" fill="#0F172A">Siklus hidup permintaan</text>
+  <text x="40" y="72" font-size="13.9" fill="#64748B">Dari kunci utama ke plaintext dan kembali — bootstrap, jalur tulis enkripsi, jalur baca dekripsi, rotasi dan mode kegagalan</text>
+
+  <text x="40" y="104" font-size="11" fill="#94A3B8" letter-spacing="1">JALUR TULIS</text>
+  <text x="40" y="308" font-size="11" fill="#94A3B8" letter-spacing="1">JALUR BACA</text>
+
+  <!-- ═══ write path ═══ -->
+  <g>
+    <rect x="40" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="66" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="66" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">1</text>
+    <text x="90" y="149" font-size="14.5" font-weight="700" fill="#0F172A">Penyediaan</text>
+    <line x1="60" y1="168" x2="225" y2="168" stroke="#E2E8F0"/>
+    <text x="60" y="194" font-size="9.6" fill="#475569">Kunci 32 byte dari env atau KMS,</text>
+    <text x="60" y="212" font-size="9.6" fill="#475569">bukan kata sandi mentah.</text>
+    <text x="60" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">base64_decode($envKey)</text>
+  </g>
+  <line x1="245" y1="185" x2="272" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="278" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="304" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="304" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">2</text>
+    <text x="328" y="149" font-size="14.5" font-weight="700" fill="#0F172A">Derivasi</text>
+    <line x1="298" y1="168" x2="463" y2="168" stroke="#E2E8F0"/>
+    <text x="298" y="194" font-size="9.8" fill="#475569">Satu subkunci per algoritma,</text>
+    <text x="298" y="212" font-size="8.9" fill="#475569">agar kunci tidak dipakai ulang.</text>
+    <text x="298" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">dgn:derive:aes-gcm</text>
+  </g>
+  <line x1="483" y1="185" x2="510" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="516" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="542" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="542" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">3</text>
+    <text x="566" y="149" font-size="14.5" font-weight="700" fill="#0F172A">Registrasi</text>
+    <line x1="536" y1="168" x2="701" y2="168" stroke="#E2E8F0"/>
+    <text x="536" y="194" font-size="10.6" fill="#475569">Implementasi disimpan dengan</text>
+    <text x="536" y="212" font-size="10.6" fill="#475569">getIdentifier() miliknya.</text>
+    <text x="536" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$registry-&gt;register($cipher)</text>
+  </g>
+  <line x1="721" y1="185" x2="748" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="754" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="780" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="780" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">4</text>
+    <text x="804" y="149" font-size="14.5" font-weight="700" fill="#0F172A">Enkripsi</text>
+    <line x1="774" y1="168" x2="939" y2="168" stroke="#E2E8F0"/>
+    <text x="774" y="194" font-size="9.9" fill="#475569">IV / nonce acak per panggilan,</text>
+    <text x="774" y="212" font-size="10.3" fill="#475569">Tag AEAD atau encrypt-then-MAC.</text>
+    <text x="774" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$manager-&gt;encrypt($data)</text>
+  </g>
+
+  <!-- wrap to read path -->
+  <path d="M856 258 V278 H142 V310" fill="none" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+
+  <!-- ═══ read path ═══ -->
+  <g>
+    <rect x="40" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="66" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="66" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">5</text>
+    <text x="90" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Simpan</text>
+    <line x1="60" y1="372" x2="225" y2="372" stroke="#E2E8F0"/>
+    <text x="60" y="398" font-size="11" fill="#475569">Blob biner di kolom BLOB,</text>
+    <text x="60" y="416" font-size="8.5" fill="#475569">atau base64 untuk penyimpanan teks.</text>
+    <text x="60" y="440" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">v1 | IV | tag | ciphertext</text>
+  </g>
+  <line x1="245" y1="389" x2="272" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="278" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="304" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="304" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">6</text>
+    <text x="328" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Pemilihan</text>
+    <line x1="298" y1="372" x2="463" y2="372" stroke="#E2E8F0"/>
+    <text x="298" y="398" font-size="10" fill="#475569">Identifier yang tersimpan bersama</text>
+    <text x="298" y="416" font-size="11" fill="#475569">record memilih implementasinya,</text>
+    <text x="298" y="434" font-size="9.7" fill="#475569">sehingga data lama tetap terbaca.</text>
+  </g>
+  <line x1="483" y1="389" x2="510" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="516" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="542" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="542" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">7</text>
+    <text x="566" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Periksa</text>
+    <line x1="536" y1="372" x2="701" y2="372" stroke="#E2E8F0"/>
+    <text x="536" y="398" font-size="11" fill="#475569">Prefiks dan panjang diperiksa</text>
+    <text x="536" y="416" font-size="11" fill="#475569">sebelum tag / MAC dibandingkan</text>
+    <text x="536" y="434" font-size="9.4" fill="#475569">dalam waktu konstan.</text>
+    <text x="536" y="452" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">hash_equals()</text>
+  </g>
+  <line x1="721" y1="389" x2="748" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="754" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="780" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="780" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">8</text>
+    <text x="804" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Dekripsi</text>
+    <line x1="774" y1="372" x2="939" y2="372" stroke="#E2E8F0"/>
+    <text x="774" y="398" font-size="11" fill="#475569">Plaintext kembali ke pemanggil;</text>
+    <text x="774" y="416" font-size="11" fill="#475569">saat gagal, detailnya tidak</text>
+    <text x="774" y="434" font-size="11" fill="#475569">dibocorkan ke klien.</text>
+  </g>
+
+  <!-- ═══ maintenance & failures ═══ -->
+  <text x="40" y="492" font-size="11" fill="#94A3B8" letter-spacing="1">PERAWATAN &amp; MODE KEGAGALAN</text>
+  <rect x="40" y="504" width="440" height="112" rx="14" fill="#FFF7ED" stroke="#FDBA74"/>
+  <text x="60" y="532" font-size="13.5" font-weight="700" fill="#9A3412">Rotasi &amp; migrasi</text>
+  <circle cx="66" cy="554" r="2.5" fill="#F59E0B"/><text x="78" y="558" font-size="11" fill="#7C2D12">Simpan identifier (dan prefiks v1) di tiap record</text>
+  <circle cx="66" cy="573" r="2.5" fill="#F59E0B"/><text x="78" y="577" font-size="9.7" fill="#7C2D12">Dekripsi dengan kunci lama, enkripsi ulang dengan kunci baru</text>
+  <circle cx="66" cy="592" r="2.5" fill="#F59E0B"/><text x="78" y="596" font-size="10.5" fill="#7C2D12">setDefaultIdentifier() mengganti default, kode pemanggil tak berubah</text>
+
+  <rect x="520" y="504" width="440" height="112" rx="14" fill="#FEF2F2" stroke="#FCA5A5"/>
+  <text x="540" y="532" font-size="13.5" font-weight="700" fill="#991B1B">Kegagalan memicu EncryptionException</text>
+  <circle cx="546" cy="554" r="2.5" fill="#EF4444"/><text x="558" y="558" font-size="8.6" fill="#7F1D1D">Prefiks tidak valid, ciphertext terlalu pendek</text>
+  <circle cx="546" cy="573" r="2.5" fill="#EF4444"/><text x="558" y="577" font-size="9.6" fill="#7F1D1D">Tag atau MAC tidak cocok — data diubah atau kunci salah</text>
+  <circle cx="546" cy="592" r="2.5" fill="#EF4444"/><text x="558" y="596" font-size="9.4" fill="#7F1D1D">Identifier tak dikenal, algoritma tak terdaftar, panjang kunci salah</text>
+
+  <text x="40" y="644" font-size="10" fill="#94A3B8">Bootstrap terjadi sekali per proses (factory mendaftarkan semua encryptor sekaligus); enkripsi dan dekripsi adalah jalur kritis setiap permintaan.</text>
+</svg>

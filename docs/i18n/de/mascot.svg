@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated from docs/mascot.svg by scripts/i18n-build-svg.php (de) — edit docs/i18n/labels/de.json instead. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-labelledby="mascotTitle mascotDesc">
+  <title id="mascotTitle">Locky — Projekt-Maskottchen von erikwang2013/encryption</title>
+  <desc id="mascotDesc">Ein freundliches Schloss-Maskottchen mit Schlüsselloch-Lächeln, das mit einem Arm winkt und im anderen einen goldenen Schlüssel hält. Es steht für die plug-in-fähige Kryptografie-Bibliothek: symmetrische/asymmetrische Chiffren, Hashing, Schlüsselableitung und die chinesischen Nationalalgorithmen.</desc>
+
+  <defs>
+    <linearGradient id="lyBody" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="0.55" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#0E7490"/>
+    </linearGradient>
+    <linearGradient id="lyShackle" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E2E8F0"/>
+      <stop offset="1" stop-color="#64748B"/>
+    </linearGradient>
+    <linearGradient id="lyKey" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#D97706"/>
+    </linearGradient>
+    <radialGradient id="lyGlow" cx="50%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#6366F1" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="120" cy="116" r="112" fill="url(#lyGlow)"/>
+
+  <!-- shackle -->
+  <path d="M78 118 A42 42 0 0 1 162 118" fill="none" stroke="url(#lyShackle)" stroke-width="17" stroke-linecap="round"/>
+
+  <!-- left arm, waving -->
+  <path d="M60 168 L36 180" stroke="#4338CA" stroke-width="13" stroke-linecap="round" fill="none"/>
+  <circle cx="34" cy="181" r="10" fill="#F8FAFC" stroke="#4338CA" stroke-width="3"/>
+
+  <!-- right arm + key -->
+  <path d="M180 168 L202 180" stroke="#4338CA" stroke-width="13" stroke-linecap="round" fill="none"/>
+  <circle cx="205" cy="181" r="10" fill="#F8FAFC" stroke="#4338CA" stroke-width="3"/>
+  <g transform="translate(208 186) rotate(-46)">
+    <circle cx="0" cy="0" r="6.5" fill="none" stroke="url(#lyKey)" stroke-width="4.5"/>
+    <rect x="5" y="-2.4" width="27" height="4.8" rx="2.4" fill="url(#lyKey)"/>
+    <rect x="22" y="2.4" width="4.4" height="8" rx="2" fill="url(#lyKey)"/>
+    <rect x="29" y="2.4" width="4" height="6" rx="2" fill="url(#lyKey)"/>
+  </g>
+
+  <!-- body -->
+  <rect x="52" y="112" width="136" height="108" rx="30" fill="url(#lyBody)" stroke="#312E81" stroke-width="3"/>
+  <ellipse cx="92" cy="130" rx="26" ry="8" fill="#FFFFFF" opacity="0.14"/>
+
+  <!-- face -->
+  <ellipse cx="76" cy="184" rx="11" ry="6.5" fill="#F472B6" opacity="0.30"/>
+  <ellipse cx="164" cy="184" rx="11" ry="6.5" fill="#F472B6" opacity="0.30"/>
+  <circle cx="96" cy="158" r="13" fill="#F8FAFC"/>
+  <circle cx="144" cy="158" r="13" fill="#F8FAFC"/>
+  <circle cx="98" cy="160" r="6.2" fill="#0F172A"/>
+  <circle cx="146" cy="160" r="6.2" fill="#0F172A"/>
+  <circle cx="95.6" cy="157.4" r="2.1" fill="#FFFFFF"/>
+  <circle cx="143.6" cy="157.4" r="2.1" fill="#FFFFFF"/>
+
+  <!-- keyhole as the mouth -->
+  <circle cx="120" cy="188" r="9" fill="#1E1B4B" opacity="0.6"/>
+  <path d="M115 194 h10 l3.5 14 q-8.5 3 -17 0 z" fill="#1E1B4B" opacity="0.6"/>
+</svg>

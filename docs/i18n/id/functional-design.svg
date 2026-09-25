@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated from docs/functional-design.svg by scripts/i18n-build-svg.php (id) — edit docs/i18n/labels/id.json instead. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 716" width="1000" height="716" role="img" aria-labelledby="featTitle featDesc" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="featTitle">Desain fungsional — erikwang2013/encryption</title>
+  <desc id="featDesc">Peta kemampuan pustaka: enkripsi simetris, enkripsi asimetris, hashing, derivasi kunci, KDF berbasis kata sandi, dan algoritma nasional Tiongkok, ditambah prinsip desain, default keamanan, dan jalur ekstensibilitas.</desc>
+
+  <rect x="0" y="0" width="1000" height="716" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+
+  <text x="40" y="46" font-size="26" font-weight="700" fill="#0F172A">Desain fungsional</text>
+  <text x="40" y="72" font-size="14" fill="#64748B">Enam keluarga kemampuan dengan satu struktur — antarmuka kontrak, registri, fasad, identifier bawaan</text>
+
+  <!-- ══════ card 1 : symmetric ══════ -->
+  <rect x="40" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+  <circle cx="70" cy="130" r="17" fill="#EEF2FF"/>
+  <text x="70" y="136" font-size="15" font-weight="700" fill="#4338CA" text-anchor="middle">S</text>
+  <text x="98" y="126" font-size="14.5" font-weight="700" fill="#0F172A">Enkripsi simetris</text>
+  <text x="98" y="144" font-size="10.5" fill="#64748B">EncryptorRegistry · EncryptionManager</text>
+  <line x1="60" y1="166" x2="296" y2="166" stroke="#E2E8F0"/>
+  <rect x="60" y="176" width="93" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="106.5" y="191.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">aes-256-gcm</text>
+  <rect x="161" y="176" width="126" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="224" y="191.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sodium-xchacha20</text>
+  <rect x="60" y="206" width="126" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="123" y="221.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">aes-256-cbc-hmac</text>
+  <rect x="194" y="206" width="66" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="227" y="221.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm4-cbc</text>
+  <rect x="60" y="236" width="66" height="23" rx="11" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="93" y="251.5" font-size="11" fill="#3730A3" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">zuc-128</text>
+  <text x="60" y="278" font-size="9.8" fill="#475569">Satu kunci per instans, IV acak per panggilan.</text>
+  <text x="60" y="292" font-size="11" fill="#475569">Payload biner, AEAD atau encrypt-then-MAC</text>
+
+  <!-- ══════ card 2 : asymmetric ══════ -->
+  <rect x="362" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <circle cx="392" cy="130" r="17" fill="#F5F3FF"/>
+  <text x="392" y="136" font-size="15" font-weight="700" fill="#6D28D9" text-anchor="middle">A</text>
+  <text x="420" y="126" font-size="14.5" font-weight="700" fill="#0F172A">Enkripsi asimetris</text>
+  <text x="420" y="144" font-size="10.5" fill="#64748B">AsymmetricCipherRegistry ·</text>
+  <text x="420" y="157" font-size="10.5" fill="#64748B">AsymmetricCryptoManager</text>
+  <line x1="382" y1="166" x2="618" y2="166" stroke="#E2E8F0"/>
+  <rect x="382" y="176" width="40" height="23" rx="11" fill="#F5F3FF" stroke="#C4B5FD"/>
+  <text x="402" y="191.5" font-size="11" fill="#5B21B6" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm2</text>
+  <text x="382" y="224" font-size="8.9" fill="#475569">Pasangan kunci dikirim pada setiap panggilan —</text>
+  <text x="382" y="238" font-size="9.1" fill="#475569">kunci publik untuk enkripsi, privat untuk dekripsi.</text>
+  <text x="382" y="252" font-size="11" fill="#475569">Kunci dan ciphertext berbentuk string hex.</text>
+  <text x="382" y="278" font-size="11" fill="#B45309">Butuh ext-gmp (bilangan besar GMP).</text>
+  <text x="382" y="292" font-size="10.5" fill="#475569">Sm2EncryptionService menyediakan fasad statis.</text>
+
+  <!-- ══════ card 3 : hashing ══════ -->
+  <rect x="684" y="96" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#67E8F9"/>
+  <circle cx="714" cy="130" r="17" fill="#ECFEFF"/>
+  <text x="714" y="136" font-size="15" font-weight="700" fill="#0E7490" text-anchor="middle">H</text>
+  <text x="742" y="126" font-size="14.5" font-weight="700" fill="#0F172A">Hashing</text>
+  <text x="742" y="144" font-size="10.5" fill="#64748B">HasherRegistry · HashingManager</text>
+  <line x1="704" y1="166" x2="940" y2="166" stroke="#E2E8F0"/>
+  <rect x="704" y="176" width="60" height="23" rx="11" fill="#ECFEFF" stroke="#67E8F9"/>
+  <text x="734" y="191.5" font-size="11" fill="#155E75" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sha256</text>
+  <rect x="772" y="176" width="40" height="23" rx="11" fill="#ECFEFF" stroke="#67E8F9"/>
+  <text x="792" y="191.5" font-size="11" fill="#155E75" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm3</text>
+  <text x="704" y="224" font-size="9.3" fill="#475569">Digest satu arah, tanpa material kunci,</text>
+  <text x="704" y="238" font-size="9.9" fill="#475569">Keluaran 32 byte untuk kedua algoritma.</text>
+  <text x="704" y="252" font-size="9.8" fill="#475569">digest() mengembalikan biner, digestHex() teks.</text>
+  <text x="704" y="278" font-size="8.5" fill="#475569">Dipakai untuk tanda tangan API dan cek integritas</text>
+  <text x="704" y="292" font-size="10.4" fill="#475569">serta menurunkan kunci MAC di internal.</text>
+
+  <!-- ══════ card 4 : key derivation ══════ -->
+  <rect x="40" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#5EEAD4"/>
+  <circle cx="70" cy="350" r="17" fill="#F0FDFA"/>
+  <text x="70" y="356" font-size="15" font-weight="700" fill="#0F766E" text-anchor="middle">K</text>
+  <text x="98" y="346" font-size="14.5" font-weight="700" fill="#0F172A">Derivasi kunci (IKM)</text>
+  <text x="98" y="364" font-size="10.5" fill="#64748B">KeyDerivationRegistry ·</text>
+  <text x="98" y="377" font-size="10.5" fill="#64748B">KeyDerivationManager</text>
+  <line x1="60" y1="386" x2="296" y2="386" stroke="#E2E8F0"/>
+  <rect x="60" y="396" width="86" height="23" rx="11" fill="#F0FDFA" stroke="#5EEAD4"/>
+  <text x="103" y="411.5" font-size="11" fill="#115E59" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">hkdf-sha256</text>
+  <text x="60" y="444" font-size="10.7" fill="#475569">RFC 5869: memperluas material kunci</text>
+  <text x="60" y="458" font-size="9.7" fill="#475569">berentropi tinggi jadi subkunci per tujuan:</text>
+  <text x="60" y="472" font-size="11" fill="#475569">derive($ikm, $salt, $length, $info).</text>
+  <text x="60" y="498" font-size="11" fill="#B45309">Jangan dipakai meregangkan sandi.</text>
+  <text x="60" y="512" font-size="8.9" fill="#475569">Diimplementasikan dengan hash_hkdf() PHP.</text>
+
+  <!-- ══════ card 5 : password KDF ══════ -->
+  <rect x="362" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#FCD34D"/>
+  <circle cx="392" cy="350" r="17" fill="#FFFBEB"/>
+  <text x="392" y="356" font-size="15" font-weight="700" fill="#B45309" text-anchor="middle">P</text>
+  <text x="420" y="346" font-size="14.5" font-weight="700" fill="#0F172A">KDF berbasis kata sandi</text>
+  <text x="420" y="364" font-size="10.5" fill="#64748B">PasswordBasedKdfRegistry ·</text>
+  <text x="420" y="377" font-size="10.5" fill="#64748B">PasswordBasedKdfManager</text>
+  <line x1="382" y1="386" x2="618" y2="386" stroke="#E2E8F0"/>
+  <rect x="382" y="396" width="106" height="23" rx="11" fill="#FFFBEB" stroke="#FCD34D"/>
+  <text x="435" y="411.5" font-size="11" fill="#92400E" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">pbkdf2-sha256</text>
+  <text x="382" y="444" font-size="9.5" fill="#475569">Meregangkan kata sandi manusia dengan</text>
+  <text x="382" y="458" font-size="11" fill="#475569">salt acak dan jumlah iterasi tetap</text>
+  <text x="382" y="472" font-size="11" fill="#475569">(konstruktor, default 310 000).</text>
+  <text x="382" y="498" font-size="10" fill="#B45309">Salt tidak boleh kosong; jika kosong → error.</text>
+  <text x="382" y="512" font-size="9.9" fill="#475569">Untuk menyimpan sandi, utamakan Argon2.</text>
+
+  <!-- ══════ card 6 : guomi ══════ -->
+  <rect x="684" y="316" width="276" height="200" rx="14" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <circle cx="714" cy="350" r="17" fill="#FFF1F2"/>
+  <text x="714" y="356" font-size="15" font-weight="700" fill="#BE123C" text-anchor="middle">G</text>
+  <text x="742" y="346" font-size="14.5" font-weight="700" fill="#0F172A">Kripto nasional Tiongkok</text>
+  <text x="742" y="364" font-size="9.4" fill="#64748B">src/Guomi — kontrak yang sama</text>
+  <line x1="704" y1="386" x2="940" y2="386" stroke="#E2E8F0"/>
+  <rect x="704" y="396" width="40" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="724" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm2</text>
+  <rect x="752" y="396" width="40" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="772" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm3</text>
+  <rect x="800" y="396" width="66" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="833" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sm4-cbc</text>
+  <rect x="874" y="396" width="66" height="23" rx="11" fill="#FFF1F2" stroke="#FDA4AF"/>
+  <text x="907" y="411.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">zuc-128</text>
+  <rect x="704" y="426" width="178" height="23" rx="11" fill="#FFFFFF" stroke="#FDA4AF" stroke-dasharray="5 4"/>
+  <text x="793" y="441.5" font-size="11" fill="#9F1239" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">SM1 / SM7 / SM9 → eksepsi</text>
+  <text x="704" y="474" font-size="11" fill="#475569">Guomi bukan API terpisah: daftarkan</text>
+  <text x="704" y="488" font-size="11" fill="#475569">implementasinya dan panggil lewat</text>
+  <text x="704" y="502" font-size="9.2" fill="#475569">manager yang sama dengan AES/SHA-256.</text>
+
+  <!-- ══════ bottom row ══════ -->
+  <rect x="40" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="60" y="566" font-size="13.5" font-weight="700" fill="#0F172A">Prinsip desain</text>
+  <circle cx="66" cy="588" r="2.5" fill="#6366F1"/><text x="78" y="592" font-size="11" fill="#475569">Satu kontrak per kemampuan</text>
+  <circle cx="66" cy="607" r="2.5" fill="#6366F1"/><text x="78" y="611" font-size="11" fill="#475569">Registri memilih per identifier</text>
+  <circle cx="66" cy="626" r="2.5" fill="#6366F1"/><text x="78" y="630" font-size="11" fill="#475569">Prefiks payload berversi (v1)</text>
+  <circle cx="66" cy="645" r="2.5" fill="#6366F1"/><text x="78" y="649" font-size="8.5" fill="#475569">Tanpa ketergantungan framework</text>
+
+  <rect x="362" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="382" y="566" font-size="13.5" font-weight="700" fill="#0F172A">Default keamanan</text>
+  <circle cx="388" cy="588" r="2.5" fill="#059669"/><text x="400" y="592" font-size="9.7" fill="#475569">IV / nonce acak di setiap panggilan</text>
+  <circle cx="388" cy="607" r="2.5" fill="#059669"/><text x="400" y="611" font-size="10.2" fill="#475569">AEAD atau encrypt-then-MAC</text>
+  <circle cx="388" cy="626" r="2.5" fill="#059669"/><text x="400" y="630" font-size="9.3" fill="#475569">Pemeriksaan hash_equals() waktu konstan</text>
+  <circle cx="388" cy="645" r="2.5" fill="#059669"/><text x="400" y="649" font-size="9.9" fill="#475569">Kunci utama 32 byte diwajibkan</text>
+
+  <rect x="684" y="536" width="276" height="140" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="704" y="566" font-size="13.5" font-weight="700" fill="#0F172A">Ekstensibilitas — menambah algoritma</text>
+  <circle cx="710" cy="588" r="2.5" fill="#D97706"/><text x="722" y="592" font-size="10.1" fill="#475569">1. Implementasikan kontrak keluarga</text>
+  <circle cx="710" cy="607" r="2.5" fill="#D97706"/><text x="722" y="611" font-size="11" fill="#475569">2. Kembalikan identifier unik</text>
+  <circle cx="710" cy="626" r="2.5" fill="#D97706"/><text x="722" y="630" font-size="11" fill="#475569">3. Daftarkan di registri</text>
+  <circle cx="710" cy="645" r="2.5" fill="#D97706"/><text x="722" y="649" font-size="11" fill="#475569">4. Panggil lewat fasad mana pun</text>
+
+  <text x="40" y="700" font-size="9.6" fill="#94A3B8">Setiap keluarga mengikuti pola yang sama, jadi algoritma baru cukup satu kelas baru plus satu pemanggilan register() — kode aplikasi tetap hanya bergantung pada antarmuka.</text>
+</svg>

@@ -1,9 +1,9 @@
 # erikwang2013/encryption
 
-**Languages:** **English** | [简体中文](README.zh-CN.md) | [한국어](docs/i18n/ko/README.md) | [Русский](docs/i18n/ru/README.md) | [Deutsch](docs/i18n/de/README.md) | [Français](docs/i18n/fr/README.md) | [Español](docs/i18n/es/README.md) | [Português](docs/i18n/pt/README.md) | [हिन्दी](docs/i18n/hi/README.md) | [العربية](docs/i18n/ar/README.md) | [বাংলা](docs/i18n/bn/README.md) | [Bahasa Indonesia](docs/i18n/id/README.md) | [日本語](docs/i18n/ja/README.md) | [All translations / 全部语言](docs/i18n/README.md)
+**Languages:** **English** | [简体中文](../../../README.zh-CN.md) | [한국어](../ko/README.md) | [Русский](../ru/README.md) | [Deutsch](../de/README.md) | [Français](../fr/README.md) | [Español](../es/README.md) | [Português](../pt/README.md) | [हिन्दी](../hi/README.md) | [العربية](../ar/README.md) | [বাংলা](../bn/README.md) | [Bahasa Indonesia](../id/README.md) | [日本語](../ja/README.md)
 
 <p align="center">
-  <img src="./docs/mascot.svg" alt="Locky, the project mascot: a padlock holding a golden key" width="150" height="150">
+  <img src="../../mascot.svg" alt="Locky, the project mascot: a padlock holding a golden key" width="150" height="150">
 </p>
 
 A pluggable cryptography component library: under a unified contract it provides **symmetric encryption**, **asymmetric encryption**, **hashing**, and **key derivation** (HKDF / PBKDF2), with implementations including AES/Sodium and Chinese national algorithms SM2/SM3/SM4/ZUC. Installable via Composer.
@@ -16,7 +16,7 @@ A pluggable cryptography component library: under a unified contract it provides
 
 `erikwang2013/encryption` is a pure PHP cryptography component library that gives PHP applications **type-safe, extensible** encryption, hashing, and key derivation. It has zero framework dependencies and works standalone or within Laravel, ThinkPHP, Hyperf, and webman.
 
-Below you will find the [project structure](#project-structure) together with SVG diagrams for the [architecture design](#architecture-overview), the [functional design](#functional-design), and the [request lifecycle](#request-lifecycle); the diagram sources live in [`docs/`](./docs).
+Below you will find the [project structure](#project-structure) together with SVG diagrams for the [architecture design](#architecture-overview), the [functional design](#functional-design), and the [request lifecycle](#request-lifecycle); the diagram sources live in [`docs/`](../../).
 
 ### Why it exists
 
@@ -149,9 +149,9 @@ Register `EncryptionManager` on the global `support` container in `config/plugin
 
 Capabilities are split into four contract families, each with its own registry and optional facade (`*Manager`) for composition and testing. Every family has the same shape — contract interface → registry → facade → implementations — and `EncryptionManagerFactory` wires the symmetric one from a single master key.
 
-![Architecture design: application code calls a facade, the facade resolves an implementation through a registry, and every implementation satisfies a contract; the factory derives per-algorithm subkeys](./docs/architecture-design.svg)
+![Architecture design: application code calls a facade, the facade resolves an implementation through a registry, and every implementation satisfies a contract; the factory derives per-algorithm subkeys](../../architecture-design.svg)
 
-Source: [`docs/architecture-design.svg`](./docs/architecture-design.svg)
+Source: [`docs/architecture-design.svg`](../../architecture-design.svg)
 
 | Capability | Contract | Registry | Facade (default algorithm) |
 |------------|----------|----------|----------------------------|
@@ -174,9 +174,9 @@ Design notes:
 
 Six capability families, each shipped with the identifiers listed below. Adding an algorithm is a new class plus one `register()` call — nothing in the core changes, and application code keeps depending on interfaces only.
 
-![Functional design: symmetric encryption, asymmetric encryption, hashing, key derivation, password-based KDF and Chinese national algorithms, with design principles, security defaults and the extensibility path](./docs/functional-design.svg)
+![Functional design: symmetric encryption, asymmetric encryption, hashing, key derivation, password-based KDF and Chinese national algorithms, with design principles, security defaults and the extensibility path](../../functional-design.svg)
 
-Source: [`docs/functional-design.svg`](./docs/functional-design.svg)
+Source: [`docs/functional-design.svg`](../../functional-design.svg)
 
 | Family | Identifier | What it is for |
 |--------|-----------|----------------|
@@ -193,9 +193,9 @@ Source: [`docs/functional-design.svg`](./docs/functional-design.svg)
 
 Bootstrap happens once per process; encrypt and decrypt are the per-request hot path. Each payload carries a version prefix (`v1`), so ciphertext written today stays readable after a rotation.
 
-![Request lifecycle: provision a 32-byte master key, derive subkeys, register implementations, encrypt with a random IV, persist the versioned blob, then resolve, verify and decrypt — plus rotation and failure modes](./docs/lifecycle.svg)
+![Request lifecycle: provision a 32-byte master key, derive subkeys, register implementations, encrypt with a random IV, persist the versioned blob, then resolve, verify and decrypt — plus rotation and failure modes](../../lifecycle.svg)
 
-Source: [`docs/lifecycle.svg`](./docs/lifecycle.svg)
+Source: [`docs/lifecycle.svg`](../../lifecycle.svg)
 
 1. **Provision** — a 32-byte master key from `.env` or a KMS; the factory rejects any other length.
 2. **Derive and register** — `EncryptionManagerFactory::fromMasterKey()` derives one subkey per algorithm with HMAC-SHA256 (distinct info label each) and registers every encryptor at once.
@@ -449,10 +449,7 @@ encryption/
 │   ├── architecture-design.svg      embedded in “Architecture overview”
 │   ├── functional-design.svg        embedded in “Functional design”
 │   ├── lifecycle.svg                embedded in “Request lifecycle”
-│   ├── i18n/                        this README in 12 more languages, each with
-│   │                                localised copies of the diagrams (+ labels/*.json)
 │   └── *.md                         archived review / test reports
-├── scripts/i18n-build-svg.php       builds docs/i18n/<lang>/*.svg from the label dictionaries
 ├── composer.json                    psr-4 autoload, PHP ^8.0, phpunit dev dependency
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md
@@ -522,7 +519,7 @@ Equivalent to `./vendor/bin/phpunit tests/`. If you add `phpunit.xml`, point the
 
 | WeChat Pay / 微信 | Alipay / 支付宝 |
 |:---:|:---:|
-| <img src="./docs/weixinpay.png" alt="WeChat Pay" width="130" height="130" /> | <img src="./docs/alipay.png" alt="Alipay" width="130" height="130" /> |
+| <img src="../../weixinpay.png" alt="WeChat Pay" width="130" height="130" /> | <img src="../../alipay.png" alt="Alipay" width="130" height="130" /> |
 
 ---
 

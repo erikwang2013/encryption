@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated from docs/lifecycle.svg by scripts/i18n-build-svg.php (ko) — edit docs/i18n/labels/ko.json instead. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" width="1000" height="660" role="img" aria-labelledby="lifeTitle lifeDesc" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="lifeTitle">요청 생명주기 — erikwang2013/encryption</title>
+  <desc id="lifeDesc">보호된 값의 생명주기: 32바이트 마스터 키 준비, 알고리즘별 서브키 유도, 구현체 등록, 무작위 IV로 암호화, 버전이 붙은 블롭 저장, 그다음 구현체 해석·검증·복호화. 키 교체와 실패 모드도 포함합니다.</desc>
+
+  <defs>
+    <marker id="lcArw" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="660" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+
+  <text x="40" y="46" font-size="26" font-weight="700" fill="#0F172A">요청 생명주기</text>
+  <text x="40" y="72" font-size="14" fill="#64748B">마스터 키에서 평문까지, 그리고 다시 되돌아오는 과정 — 부트스트랩, 암호화 쓰기 경로, 복호화 읽기 경로, 키 교체와 실패 모드</text>
+
+  <text x="40" y="104" font-size="11" fill="#94A3B8" letter-spacing="1">쓰기 경로</text>
+  <text x="40" y="308" font-size="11" fill="#94A3B8" letter-spacing="1">읽기 경로</text>
+
+  <!-- ═══ write path ═══ -->
+  <g>
+    <rect x="40" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="66" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="66" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">1</text>
+    <text x="90" y="149" font-size="14.5" font-weight="700" fill="#0F172A">준비</text>
+    <line x1="60" y1="168" x2="225" y2="168" stroke="#E2E8F0"/>
+    <text x="60" y="194" font-size="11" fill="#475569">env나 KMS에서 32바이트 키를</text>
+    <text x="60" y="212" font-size="9.9" fill="#475569">비밀번호 원문 사용 금지.</text>
+    <text x="60" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">base64_decode($envKey)</text>
+  </g>
+  <line x1="245" y1="185" x2="272" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="278" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="304" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="304" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">2</text>
+    <text x="328" y="149" font-size="14.5" font-weight="700" fill="#0F172A">유도</text>
+    <line x1="298" y1="168" x2="463" y2="168" stroke="#E2E8F0"/>
+    <text x="298" y="194" font-size="11" fill="#475569">알고리즘마다 서브키 하나,</text>
+    <text x="298" y="212" font-size="11" fill="#475569">키가 재사용되지 않습니다.</text>
+    <text x="298" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">dgn:derive:aes-gcm</text>
+  </g>
+  <line x1="483" y1="185" x2="510" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="516" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="542" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="542" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">3</text>
+    <text x="566" y="149" font-size="14.5" font-weight="700" fill="#0F172A">등록</text>
+    <line x1="536" y1="168" x2="701" y2="168" stroke="#E2E8F0"/>
+    <text x="536" y="194" font-size="11" fill="#475569">구현체는 각자의</text>
+    <text x="536" y="212" font-size="9.3" fill="#475569">getIdentifier()로 저장됩니다.</text>
+    <text x="536" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$registry-&gt;register($cipher)</text>
+  </g>
+  <line x1="721" y1="185" x2="748" y2="185" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="754" y="112" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#C7D2FE"/>
+    <circle cx="780" cy="144" r="15" fill="#EEF2FF"/>
+    <text x="780" y="150" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">4</text>
+    <text x="804" y="149" font-size="14.5" font-weight="700" fill="#0F172A">암호화</text>
+    <line x1="774" y1="168" x2="939" y2="168" stroke="#E2E8F0"/>
+    <text x="774" y="194" font-size="11" fill="#475569">호출마다 무작위 IV / nonce,</text>
+    <text x="774" y="212" font-size="10.1" fill="#475569">AEAD 태그 또는 encrypt-then-MAC.</text>
+    <text x="774" y="236" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">$manager-&gt;encrypt($data)</text>
+  </g>
+
+  <!-- wrap to read path -->
+  <path d="M856 258 V278 H142 V310" fill="none" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+
+  <!-- ═══ read path ═══ -->
+  <g>
+    <rect x="40" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="66" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="66" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">5</text>
+    <text x="90" y="353" font-size="14.5" font-weight="700" fill="#0F172A">저장</text>
+    <line x1="60" y1="372" x2="225" y2="372" stroke="#E2E8F0"/>
+    <text x="60" y="398" font-size="11" fill="#475569">바이너리 블롭은 BLOB 컬럼에,</text>
+    <text x="60" y="416" font-size="11" fill="#475569">텍스트 저장 시에는 base64.</text>
+    <text x="60" y="440" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">v1 | IV | tag | ciphertext</text>
+  </g>
+  <line x1="245" y1="389" x2="272" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="278" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="304" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="304" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">6</text>
+    <text x="328" y="353" font-size="14.5" font-weight="700" fill="#0F172A">해석</text>
+    <line x1="298" y1="372" x2="463" y2="372" stroke="#E2E8F0"/>
+    <text x="298" y="398" font-size="11" fill="#475569">레코드와 함께 저장된 식별자가</text>
+    <text x="298" y="416" font-size="11" fill="#475569">구현체를 선택하므로</text>
+    <text x="298" y="434" font-size="10.3" fill="#475569">기존 데이터도 계속 복호화됩니다.</text>
+  </g>
+  <line x1="483" y1="389" x2="510" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="516" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="542" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="542" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">7</text>
+    <text x="566" y="353" font-size="14.5" font-weight="700" fill="#0F172A">검증</text>
+    <line x1="536" y1="372" x2="701" y2="372" stroke="#E2E8F0"/>
+    <text x="536" y="398" font-size="11" fill="#475569">접두사와 길이를 먼저 확인한 뒤</text>
+    <text x="536" y="416" font-size="11" fill="#475569">태그 / MAC을 상수 시간으로</text>
+    <text x="536" y="434" font-size="11" fill="#475569">비교합니다.</text>
+    <text x="536" y="452" font-size="10" fill="#334155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">hash_equals()</text>
+  </g>
+  <line x1="721" y1="389" x2="748" y2="389" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#lcArw)"/>
+  <g>
+    <rect x="754" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
+    <circle cx="780" cy="348" r="15" fill="#EEF2FF"/>
+    <text x="780" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">8</text>
+    <text x="804" y="353" font-size="14.5" font-weight="700" fill="#0F172A">복호화</text>
+    <line x1="774" y1="372" x2="939" y2="372" stroke="#E2E8F0"/>
+    <text x="774" y="398" font-size="11" fill="#475569">평문이 호출자에게 반환되며,</text>
+    <text x="774" y="416" font-size="11" fill="#475569">실패하더라도 세부 정보는</text>
+    <text x="774" y="434" font-size="8.9" fill="#475569">클라이언트에 노출되지 않음.</text>
+  </g>
+
+  <!-- ═══ maintenance & failures ═══ -->
+  <text x="40" y="492" font-size="11" fill="#94A3B8" letter-spacing="1">유지보수 및 실패 모드</text>
+  <rect x="40" y="504" width="440" height="112" rx="14" fill="#FFF7ED" stroke="#FDBA74"/>
+  <text x="60" y="532" font-size="13.5" font-weight="700" fill="#9A3412">키 교체와 마이그레이션</text>
+  <circle cx="66" cy="554" r="2.5" fill="#F59E0B"/><text x="78" y="558" font-size="11" fill="#7C2D12">모든 레코드에 식별자(v1 접두사 포함)를 함께 보관</text>
+  <circle cx="66" cy="573" r="2.5" fill="#F59E0B"/><text x="78" y="577" font-size="11" fill="#7C2D12">기존 키로 복호화한 뒤 새 키로 다시 암호화</text>
+  <circle cx="66" cy="592" r="2.5" fill="#F59E0B"/><text x="78" y="596" font-size="11" fill="#7C2D12">setDefaultIdentifier()로 기본값만 바꾸면 호출부는 그대로</text>
+
+  <rect x="520" y="504" width="440" height="112" rx="14" fill="#FEF2F2" stroke="#FCA5A5"/>
+  <text x="540" y="532" font-size="13.5" font-weight="700" fill="#991B1B">실패 시 EncryptionException 발생</text>
+  <circle cx="546" cy="554" r="2.5" fill="#EF4444"/><text x="558" y="558" font-size="11" fill="#7F1D1D">잘못된 접두사, 너무 짧은 암호문</text>
+  <circle cx="546" cy="573" r="2.5" fill="#EF4444"/><text x="558" y="577" font-size="11" fill="#7F1D1D">태그 또는 MAC 불일치 — 변조 또는 잘못된 키</text>
+  <circle cx="546" cy="592" r="2.5" fill="#EF4444"/><text x="558" y="596" font-size="11" fill="#7F1D1D">알 수 없는 식별자, 미등록 알고리즘, 잘못된 키 길이</text>
+
+  <text x="40" y="644" font-size="11" fill="#94A3B8">부트스트랩은 프로세스당 한 번 수행되며(팩토리가 모든 암호화기를 한 번에 등록), 암호화와 복호화가 요청마다 실행되는 핫 패스입니다.</text>
+</svg>

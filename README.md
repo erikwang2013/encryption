@@ -242,6 +242,8 @@ Source: [`docs/lifecycle.svg`](./docs/lifecycle.svg)
 | Extension | `ext-gmp` (optional, **SM2** encryption/decryption and key generation) |
 | Composer | `pohoc/crypto-sm` (dependency; SM2/SM3/SM4 wrappers) |
 
+SM3 and SM4-CBC use OpenSSL's native implementations whenever the linked OpenSSL provides `sm3` / `sm4-cbc` (OpenSSL 1.1.1+). Otherwise they fall back to the pure-PHP implementations in `pohoc/crypto-sm` — byte-for-byte identical output, but far slower: the SM3 fallback is quadratic in memory (~490 MB and ~85 s for a single 1 MiB digest, versus ~4 MB at ~60 MB/s natively). CI runs the suite on both paths.
+
 ## Installation
 
 ### From a local path (development)
@@ -481,8 +483,10 @@ encryption/
 │   └── *.md                         archived review / test reports
 ├── examples/plain-php/              runnable vanilla-PHP integration (bootstrap + demo)
 ├── scripts/i18n-build-svg.php       builds docs/i18n/<lang>/*.svg from the label dictionaries
+├── .github/workflows/tests.yml      phpunit on PHP 8.0–8.4 in CI (gmp + sodium)
 ├── composer.json                    psr-4 autoload, PHP ^8.0, phpunit dev dependency
 ├── phpunit.xml.dist
+├── SECURITY.md                      vulnerability disclosure policy
 └── README.md  README.zh-CN.md
 ```
 
@@ -530,6 +534,7 @@ Laravel’s API targets framework serialization and cookies; this library target
 2. **Algorithms**: prefer **AES-256-GCM** or **Sodium** for new systems; use **SM3/SM4/ZUC/SM2** where required; **HKDF** for subkey expansion; for **PBKDF2** password stretching, use sufficient iterations and random salt.
 3. **Transport**: still use TLS in transit; this library handles field-level crypto and digests.
 4. **Migration**: track `identifier` per algorithm version so old data can be decrypted and re-encrypted.
+5. **Found a vulnerability?** Report it privately — see [`SECURITY.md`](SECURITY.md).
 
 ---
 

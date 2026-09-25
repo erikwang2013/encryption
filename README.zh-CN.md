@@ -481,8 +481,10 @@ encryption/
 │   └── *.md                         评审 / 测试报告存档
 ├── examples/plain-php/              可直接运行的纯 PHP 接入示例（bootstrap + demo）
 ├── scripts/i18n-build-svg.php       由词条字典生成 docs/i18n/<lang>/*.svg
+├── .github/workflows/tests.yml      CI：PHP 8.0–8.4 跑 phpunit（带 gmp + sodium）
 ├── composer.json                    psr-4 自动加载、PHP ^8.0、phpunit 开发依赖
 ├── phpunit.xml.dist
+├── SECURITY.md                      漏洞披露流程
 └── README.md  README.zh-CN.md
 ```
 

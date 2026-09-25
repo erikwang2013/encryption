@@ -242,6 +242,8 @@ Quelle: [`docs/lifecycle.svg`](./lifecycle.svg)
 | Erweiterung | `ext-gmp` (optional, **SM2**-Ver- und -Entschlüsselung sowie Schlüsselerzeugung) |
 | Composer | `pohoc/crypto-sm` (Abhängigkeit; Wrapper für SM2/SM3/SM4) |
 
+SM3 und SM4-CBC nutzen die nativen Implementierungen von OpenSSL, sofern das eingebundene OpenSSL `sm3` / `sm4-cbc` bereitstellt (OpenSSL 1.1.1+). Andernfalls weichen sie auf die reinen PHP-Implementierungen in `pohoc/crypto-sm` aus — die Ausgabe ist byteweise identisch, aber deutlich langsamer: Der SM3-Fallback wächst quadratisch im Speicher (~490 MB und ~85 s für einen einzelnen 1 MiB-Digest, gegenüber ~4 MB bei ~60 MB/s nativ). Die CI fährt die Testsuite über beide Pfade.
+
 ## Installation
 
 ### Aus einem lokalen Pfad (Entwicklung)
@@ -481,8 +483,10 @@ encryption/
 │   └── *.md                         archivierte Review- und Testberichte
 ├── examples/plain-php/              lauffähige Vanilla-PHP-Integration (Bootstrap + Demo)
 ├── scripts/i18n-build-svg.php       erzeugt docs/i18n/<lang>/*.svg aus den Label-Wörterbüchern
+├── .github/workflows/tests.yml      phpunit auf PHP 8.0–8.4 in der CI (gmp + sodium)
 ├── composer.json                    psr-4-Autoload, PHP ^8.0, phpunit als Dev-Abhängigkeit
 ├── phpunit.xml.dist
+├── SECURITY.md                      Richtlinie zur Meldung von Sicherheitslücken
 └── README.md  README.zh-CN.md
 ```
 
@@ -530,6 +534,7 @@ Laravels API zielt auf Framework-Serialisierung und Cookies; diese Bibliothek zi
 2. **Algorithmen**: Bevorzugen Sie für neue Systeme **AES-256-GCM** oder **Sodium**; setzen Sie **SM3/SM4/ZUC/SM2** dort ein, wo es vorgeschrieben ist; **HKDF** für die Unterschlüssel-Expansion; beim Passwortstrecken mit **PBKDF2** verwenden Sie ausreichend hohe Iterationszahlen und zufälliges Salt.
 3. **Transport**: Nutzen Sie auf dem Übertragungsweg weiterhin TLS; diese Bibliothek übernimmt feldweise Kryptografie und Hashwerte.
 4. **Migration**: Führen Sie den `identifier` je Algorithmusversion mit, damit alte Daten entschlüsselt und neu verschlüsselt werden können.
+5. **Eine Sicherheitslücke gefunden?** Melden Sie sie vertraulich — siehe [`SECURITY.md`](../../../SECURITY.md).
 
 ---
 

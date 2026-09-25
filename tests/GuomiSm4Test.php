@@ -81,6 +81,42 @@ final class GuomiSm4Test extends TestCase
         self::assertSame('', $e->decrypt($e->encrypt('')));
     }
 
+    public function testNativeAndVendorPathsProduceIdenticalCiphertext(): void
+    {
+        if (!Sm4CbcEncryptor::nativeAvailable()) {
+            self::markTestSkipped('OpenSSL has no sm4-cbc; the vendor path is in use.');
+        }
+        $key = (string) hex2bin('0123456789abcdeffedcba9876543210');
+        $iv = (string) hex2bin('000102030405060708090a0b0c0d0e0f');
+        $options = (new Sm4Options())
+            ->setMode(Sm4::MODE_CBC)
+            ->setIv(bin2hex($iv))
+            ->setPadding('pkcs5');
+
+        foreach (['', '13800000000', random_bytes(32), random_bytes(1000)] as $plain) {
+            $native = openssl_encrypt($plain, 'sm4-cbc', $key, OPENSSL_RAW_DATA, $iv);
+            $vendor = hex2bin((string) Sm4::encrypt($plain, bin2hex($key), $options));
+            self::assertSame(
+                bin2hex((string) $vendor),
+                bin2hex((string) $native),
+                'SM4 ciphertext differs for input length ' . strlen($plain)
+            );
+        }
+    }
+
+    public function testCiphertextFromTheVendorImplementationStillDecrypts(): void
+    {
+        // 固化向量：由旧实现（vendor Sm4，CBC/pkcs5）产出的完整载荷 v1 | IV | MAC | 密文，
+        // 用来保证切换到 OpenSSL 后历史数据仍可解密。原文 "13800000000"。
+        $key = (string) hex2bin('0123456789abcdeffedcba9876543210');
+        $blob = (string) hex2bin(
+            '7631000102030405060708090a0b0c0d0e0fdc7564cd06143f25df8649f637ff05f6'
+            . '41b08e1c3bc975fd68e666ac91df818f9a6beb43162615929289bcc39bc61ce7'
+        );
+
+        self::assertSame('13800000000', (new Sm4CbcEncryptor($key))->decrypt($blob));
+    }
+
     public function testImplementsEncryptorInterface(): void
     {
         self::assertInstanceOf(EncryptorInterface::class, new Sm4CbcEncryptor(random_bytes(16)));

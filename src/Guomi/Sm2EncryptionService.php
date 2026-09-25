@@ -19,6 +19,9 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
  */
 final class Sm2EncryptionService
 {
+    /** vendor 的私有 pointMultiply 反射句柄（进程内缓存一次） */
+    private static ?\ReflectionMethod $pointMultiply = null;
+
     public static function requireGmp(): void
     {
         if (!extension_loaded('gmp')) {
@@ -59,8 +62,37 @@ final class Sm2EncryptionService
         } while (gmp_cmp($d, 1) < 0 || gmp_cmp($d, $n) >= 0);
 
         $privateKey = str_pad(gmp_strval($d, 16), 64, '0', STR_PAD_LEFT);
-        $publicKey = (new \ReflectionMethod(Sm2::class, 'pointMultiply'))->invoke(null, $privateKey);
 
-        return new Keypair($privateKey, $publicKey);
+        return new Keypair($privateKey, self::derivePublicKey($privateKey));
+    }
+
+    /**
+     * 由私钥推导公钥：vendor 只把 pointMultiply() 暴露为 private static，
+     * 而其公开的 generateKeyPairHex() 内部用 gmp_random_range（非 CSPRNG），
+     * 因此这里用反射调用私有方法自行采样。
+     *
+     * setAccessible(true) 在 PHP 8.1+ 已是 no-op，但 PHP 8.0（本库声明的最低版本）
+     * 调用非公开方法必须显式开启，否则抛 ReflectionException。
+     */
+    private static function derivePublicKey(string $privateKeyHex): string
+    {
+        if (self::$pointMultiply === null) {
+            if (!method_exists(Sm2::class, 'pointMultiply')) {
+                throw new EncryptionException(
+                    'pohoc/crypto-sm changed its internals: Sm2::pointMultiply() is missing, '
+                    . 'cannot derive an SM2 public key.'
+                );
+            }
+            $method = new \ReflectionMethod(Sm2::class, 'pointMultiply');
+            $method->setAccessible(true);
+            self::$pointMultiply = $method;
+        }
+
+        $publicKey = self::$pointMultiply->invoke(null, $privateKeyHex);
+        if (!is_string($publicKey) || $publicKey === '') {
+            throw new EncryptionException('SM2 public key derivation failed.');
+        }
+
+        return $publicKey;
     }
 }

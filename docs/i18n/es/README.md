@@ -242,6 +242,8 @@ Fuente: [`docs/lifecycle.svg`](./lifecycle.svg)
 | Extensión | `ext-gmp` (opcional, cifrado/descifrado **SM2** y generación de claves) |
 | Composer | `pohoc/crypto-sm` (dependencia; envoltorios de SM2/SM3/SM4) |
 
+SM3 y SM4-CBC usan las implementaciones nativas de OpenSSL siempre que el OpenSSL enlazado proporcione `sm3` / `sm4-cbc` (OpenSSL 1.1.1+). En caso contrario recurren a las implementaciones en PHP puro de `pohoc/crypto-sm`: la salida es idéntica byte a byte, pero mucho más lenta: el respaldo de SM3 es cuadrático en memoria (~490 MB y ~85 s para un solo digest de 1 MiB, frente a ~4 MB a ~60 MB/s en nativo). La CI ejecuta la suite por ambas rutas.
+
 ## Instalación
 
 ### Desde una ruta local (desarrollo)
@@ -481,8 +483,10 @@ encryption/
 │   └── *.md                         informes archivados de revisión / pruebas
 ├── examples/plain-php/              integración Vanilla PHP ejecutable (bootstrap + demo)
 ├── scripts/i18n-build-svg.php       genera docs/i18n/<lang>/*.svg desde los diccionarios de etiquetas
+├── .github/workflows/tests.yml      phpunit en PHP 8.0–8.4 en CI (gmp + sodium)
 ├── composer.json                    autocarga psr-4, PHP ^8.0, phpunit como dependencia de desarrollo
 ├── phpunit.xml.dist
+├── SECURITY.md                      política de divulgación de vulnerabilidades
 └── README.md  README.zh-CN.md
 ```
 
@@ -530,6 +534,7 @@ La API de Laravel se orienta a la serialización del framework y a las cookies; 
 2. **Algoritmos**: para sistemas nuevos prefiere **AES-256-GCM** o **Sodium**; usa **SM3/SM4/ZUC/SM2** donde sea obligatorio; **HKDF** para expandir subclaves; y para estirar contraseñas con **PBKDF2**, usa suficientes iteraciones y sal aleatoria.
 3. **Transporte**: sigue usando TLS en tránsito; esta biblioteca se ocupa del cifrado a nivel de campo y de los resúmenes.
 4. **Migración**: registra el `identifier` por versión de algoritmo para poder descifrar y volver a cifrar los datos antiguos.
+5. **¿Encontraste una vulnerabilidad?** Repórtala en privado: consulta [`SECURITY.md`](../../../SECURITY.md).
 
 ---
 

@@ -13,6 +13,19 @@
     ],
     "type": "library",
     "license": "MIT",
+    "homepage": "https://github.com/erikwang2013/encryption",
+    "authors": [
+        {
+            "name": "erik",
+            "email": "erik@erik.xyz",
+            "homepage": "https://erik.xyz"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/erikwang2013/encryption/issues",
+        "source": "https://github.com/erikwang2013/encryption",
+        "security": "https://github.com/erikwang2013/encryption/security/advisories/new"
+    },
     "require": {
         "php": "^8.0",
         "ext-openssl": "*",

@@ -242,6 +242,8 @@ Fonte: [`docs/lifecycle.svg`](./lifecycle.svg)
 | Extensão | `ext-gmp` (opcional, criptografia/descriptografia **SM2** e geração de chaves) |
 | Composer | `pohoc/crypto-sm` (dependência; wrappers de SM2/SM3/SM4) |
 
+SM3 e SM4-CBC usam as implementações nativas do OpenSSL sempre que o OpenSSL vinculado oferece `sm3` / `sm4-cbc` (OpenSSL 1.1.1+). Caso contrário, recorrem às implementações em PHP puro de `pohoc/crypto-sm` — saída idêntica byte a byte, porém bem mais lenta: o fallback de SM3 é quadrático em memória (~490 MB e ~85 s para um único digest de 1 MiB, contra ~4 MB a ~60 MB/s no nativo). A CI roda a suíte nos dois caminhos.
+
 ## Instalação
 
 ### A partir de um caminho local (desenvolvimento)
@@ -481,8 +483,10 @@ encryption/
 │   └── *.md                         relatórios de revisão / teste arquivados
 ├── examples/plain-php/              integração Vanilla PHP executável (bootstrap + demo)
 ├── scripts/i18n-build-svg.php       gera docs/i18n/<lang>/*.svg a partir dos dicionários de rótulos
+├── .github/workflows/tests.yml      phpunit em PHP 8.0–8.4 na CI (gmp + sodium)
 ├── composer.json                    autoload psr-4, PHP ^8.0, phpunit como dependência de dev
 ├── phpunit.xml.dist
+├── SECURITY.md                      política de divulgação de vulnerabilidades
 └── README.md  README.zh-CN.md
 ```
 
@@ -530,6 +534,7 @@ A API do Laravel tem como alvo a serialização do framework e cookies; esta bib
 2. **Algoritmos**: prefira **AES-256-GCM** ou **Sodium** em sistemas novos; use **SM3/SM4/ZUC/SM2** onde forem exigidos; **HKDF** para expandir subchaves; ao esticar senhas com **PBKDF2**, use iterações suficientes e salt aleatório.
 3. **Transporte**: continue usando TLS em trânsito; esta biblioteca cuida da criptografia em nível de campo e dos resumos.
 4. **Migração**: acompanhe o `identifier` de cada versão de algoritmo, para que dados antigos possam ser decifrados e recifrados.
+5. **Encontrou uma vulnerabilidade?** Comunique-a em particular — veja [`SECURITY.md`](../../../SECURITY.md).
 
 ---
 

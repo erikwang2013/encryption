@@ -242,6 +242,8 @@ export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PH
 | 拡張モジュール | `ext-gmp`（任意、**SM2** の暗号化／復号と鍵生成） |
 | Composer | `pohoc/crypto-sm`（依存パッケージ。SM2/SM3/SM4 のラッパー） |
 
+SM3 と SM4-CBC は、リンクされた OpenSSL が `sm3` / `sm4-cbc` を提供する場合（OpenSSL 1.1.1 以降）、OpenSSL のネイティブ実装を使用します。提供しない場合は `pohoc/crypto-sm` の純 PHP 実装にフォールバックします。出力はバイト単位で同一ですが、はるかに低速です。SM3 のフォールバックはメモリ使用量が二乗で増え、1 MiB のダイジェスト 1 件に ~490 MB と ~85 s を要します（ネイティブでは ~4 MB・~60 MB/s）。CI は両方の経路でテストスイートを実行します。
+
 ## インストール
 
 ### ローカルパスから（開発時）
@@ -481,8 +483,10 @@ encryption/
 │   └── *.md                         レビュー / テストレポートの保管
 ├── examples/plain-php/              実行可能なバニラ PHP 統合（bootstrap + デモ）
 ├── scripts/i18n-build-svg.php       ラベル辞書から docs/i18n/<lang>/*.svg を生成
+├── .github/workflows/tests.yml      CI で PHP 8.0–8.4 の phpunit（gmp + sodium）
 ├── composer.json                    psr-4 オートロード、PHP ^8.0、phpunit 開発依存
 ├── phpunit.xml.dist
+├── SECURITY.md                      脆弱性の報告ポリシー
 └── README.md  README.zh-CN.md
 ```
 
@@ -530,6 +534,7 @@ Laravel の API はフレームワークのシリアライズや Cookie を対�
 2. **アルゴリズム**: 新規システムでは **AES-256-GCM** または **Sodium** を推奨します。必要な場面では **SM3/SM4/ZUC/SM2** を使用し、サブキーの展開には **HKDF** を用います。**PBKDF2** でパスワードを伸長する場合は、十分な反復回数とランダムなソルトを使用してください。
 3. **通信**: 通信経路では引き続き TLS を使用してください。本ライブラリが担うのはフィールド単位の暗号化とダイジェストです。
 4. **移行**: アルゴリズムのバージョンごとに `identifier` を記録し、古いデータを復号して再暗号化できるようにしてください。
+5. **脆弱性を見つけましたか?** 非公開で報告してください — [`SECURITY.md`](../../../SECURITY.md) を参照してください。
 
 ---
 

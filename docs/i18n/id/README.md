@@ -242,6 +242,8 @@ Sumber: [`docs/lifecycle.svg`](./lifecycle.svg)
 | Ekstensi | `ext-gmp` (opsional, enkripsi/dekripsi **SM2** dan pembangkitan kunci) |
 | Composer | `pohoc/crypto-sm` (dependensi; wrapper SM2/SM3/SM4) |
 
+SM3 dan SM4-CBC memakai implementasi native OpenSSL selama OpenSSL yang ditautkan menyediakan `sm3` / `sm4-cbc` (OpenSSL 1.1.1+). Jika tidak, keduanya jatuh ke implementasi PHP murni di `pohoc/crypto-sm` — keluarannya identik byte per byte, tetapi jauh lebih lambat: fallback SM3 bersifat kuadratik dalam memori (~490 MB dan ~85 s untuk satu digest 1 MiB, dibandingkan ~4 MB pada ~60 MB/s secara native). CI menjalankan suite pada kedua jalur.
+
 ## Instalasi
 
 ### Dari jalur lokal (pengembangan)
@@ -481,8 +483,10 @@ encryption/
 │   └── *.md                         arsip laporan review / pengujian
 ├── examples/plain-php/              integrasi Vanilla PHP yang bisa dijalankan (bootstrap + demo)
 ├── scripts/i18n-build-svg.php       membangun docs/i18n/<lang>/*.svg dari kamus label
+├── .github/workflows/tests.yml      phpunit pada PHP 8.0–8.4 di CI (gmp + sodium)
 ├── composer.json                    autoload psr-4, PHP ^8.0, dependensi dev phpunit
 ├── phpunit.xml.dist
+├── SECURITY.md                      kebijakan pengungkapan kerentanan
 └── README.md  README.zh-CN.md
 ```
 
@@ -530,6 +534,7 @@ API Laravel menyasar serialisasi framework dan cookie; pustaka ini menyasar **ID
 2. **Algoritma**: utamakan **AES-256-GCM** atau **Sodium** untuk sistem baru; gunakan **SM3/SM4/ZUC/SM2** bila diwajibkan; **HKDF** untuk pemekaran subkunci; untuk peregangan kata sandi dengan **PBKDF2**, gunakan jumlah iterasi yang memadai dan salt acak.
 3. **Transportasi**: tetap gunakan TLS saat data dikirim; pustaka ini menangani kripto tingkat field dan digest.
 4. **Migrasi**: catat `identifier` untuk setiap versi algoritma agar data lama dapat didekripsi dan dienkripsi ulang.
+5. **Menemukan kerentanan?** Laporkan secara privat — lihat [`SECURITY.md`](../../../SECURITY.md).
 
 ---
 

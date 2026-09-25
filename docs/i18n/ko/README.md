@@ -242,6 +242,8 @@ export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PH
 | 확장 | `ext-gmp`(선택, **SM2** 암호화/복호화 및 키 생성) |
 | Composer | `pohoc/crypto-sm`(의존성, SM2/SM3/SM4 래퍼) |
 
+SM3와 SM4-CBC는 연결된 OpenSSL이 `sm3` / `sm4-cbc`를 제공하면(OpenSSL 1.1.1 이상) OpenSSL의 네이티브 구현을 사용합니다. 그렇지 않으면 `pohoc/crypto-sm`의 순수 PHP 구현으로 폴백합니다. 출력은 바이트 단위로 동일하지만 훨씬 느립니다. SM3 폴백은 메모리 사용량이 제곱으로 늘어나 1 MiB 다이제스트 한 건에 ~490 MB와 ~85 s가 걸리는 반면, 네이티브에서는 ~4 MB로 ~60 MB/s입니다. CI는 두 경로 모두에서 테스트 스위트를 실행합니다.
+
 ## 설치
 
 ### 로컬 경로에서 설치 (개발용)
@@ -481,8 +483,10 @@ encryption/
 │   └── *.md                         리뷰 / 테스트 보고서 아카이브
 ├── examples/plain-php/              실행 가능한 바닐라 PHP 통합 (부트스트랩 + 데모)
 ├── scripts/i18n-build-svg.php       레이블 사전에서 docs/i18n/<lang>/*.svg 생성
+├── .github/workflows/tests.yml      CI에서 PHP 8.0–8.4 phpunit 실행 (gmp + sodium)
 ├── composer.json                    psr-4 오토로드, PHP ^8.0, phpunit 개발 의존성
 ├── phpunit.xml.dist
+├── SECURITY.md                      취약점 제보 정책
 └── README.md  README.zh-CN.md
 ```
 
@@ -530,6 +534,7 @@ Laravel의 API는 프레임워크 직렬화와 쿠키를 목표로 하고, 이 �
 2. **알고리즘**: 신규 시스템에는 **AES-256-GCM** 또는 **Sodium**을 권장합니다. 규정상 필요하면 **SM3/SM4/ZUC/SM2**를 쓰고, 서브키 확장에는 **HKDF**를, **PBKDF2**로 비밀번호 강도를 높일 때는 충분한 반복 횟수와 무작위 솔트를 사용하세요.
 3. **전송**: 통신 구간에는 여전히 TLS를 사용하세요. 이 라이브러리는 필드 단위 암호화와 다이제스트를 담당합니다.
 4. **마이그레이션**: 알고리즘 버전마다 `identifier`를 함께 기록해 두면 기존 데이터를 복호화한 뒤 다시 암호화할 수 있습니다.
+5. **취약점을 발견하셨나요?** 비공개로 제보해 주세요 — [`SECURITY.md`](../../../SECURITY.md)를 참고하세요.
 
 ---
 

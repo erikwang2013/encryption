@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Erikwang2013\Encryption\Tests;
 
 use CryptoSm\Exception\CryptoException;
+use CryptoSm\SM2\Sm2;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 use Erikwang2013\Encryption\Guomi\Sm2EncryptionService;
 
@@ -36,6 +37,21 @@ final class GuomiSm2Test extends TestCase
         $this->expectException(EncryptionException::class);
         $this->expectExceptionMessage('SM2 requires ext-gmp.');
         Sm2EncryptionService::decrypt(str_repeat('0', 192), str_repeat('1', 64));
+    }
+
+    public function testVendorPointMultiplyStaysReflectable(): void
+    {
+        // 本库靠反射调用 vendor 的私有 pointMultiply 来生成公钥（其公开 API 用了非 CSPRNG）。
+        // 这里不依赖 ext-gmp，因此任何环境都会先跑：vendor 改名/改可见性时立即失败，
+        // 而不是等到运行时抛 EncryptionException。
+        self::assertTrue(
+            method_exists(Sm2::class, 'pointMultiply'),
+            'pohoc/crypto-sm no longer exposes Sm2::pointMultiply() — Sm2EncryptionService must be updated.'
+        );
+
+        $method = new \ReflectionMethod(Sm2::class, 'pointMultiply');
+        $method->setAccessible(true); // PHP 8.0 必需，8.1+ 为 no-op
+        self::assertTrue($method->isStatic());
     }
 
     public function testGenerateKeyPairThrowsWhenGmpMissing(): void

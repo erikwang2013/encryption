@@ -242,6 +242,8 @@ Source : [`docs/lifecycle.svg`](./lifecycle.svg)
 | Extension | `ext-gmp` (facultatif, chiffrement/déchiffrement **SM2** et génération de clés) |
 | Composer | `pohoc/crypto-sm` (dépendance ; wrappers SM2/SM3/SM4) |
 
+SM3 et SM4-CBC utilisent les implémentations natives d'OpenSSL lorsque l'OpenSSL lié fournit `sm3` / `sm4-cbc` (OpenSSL 1.1.1+). Sinon, ils retombent sur les implémentations PHP pures de `pohoc/crypto-sm` — sortie identique octet pour octet, mais bien plus lente : le repli SM3 est quadratique en mémoire (~490 MB et ~85 s pour un seul digest de 1 MiB, contre ~4 MB à ~60 MB/s en natif). La CI exécute la suite sur les deux chemins.
+
 ## Installation
 
 ### Depuis un chemin local (développement)
@@ -481,8 +483,10 @@ encryption/
 │   └── *.md                         rapports de revue / de tests archivés
 ├── examples/plain-php/              intégration Vanilla PHP exécutable (bootstrap + démo)
 ├── scripts/i18n-build-svg.php       génère docs/i18n/<lang>/*.svg depuis les dictionnaires de libellés
+├── .github/workflows/tests.yml      phpunit sur PHP 8.0–8.4 en CI (gmp + sodium)
 ├── composer.json                    autoload psr-4, PHP ^8.0, dépendance de dev phpunit
 ├── phpunit.xml.dist
+├── SECURITY.md                      politique de divulgation des vulnérabilités
 └── README.md  README.zh-CN.md
 ```
 
@@ -530,6 +534,7 @@ L'API de Laravel vise la sérialisation du framework et les cookies ; cette bibl
 2. **Algorithmes** : privilégiez **AES-256-GCM** ou **Sodium** pour les nouveaux systèmes ; utilisez **SM3/SM4/ZUC/SM2** là où c'est exigé ; **HKDF** pour l'expansion des sous-clés ; pour l'étirement de mots de passe avec **PBKDF2**, utilisez un nombre d'itérations suffisant et un sel aléatoire.
 3. **Transport** : continuez d'utiliser TLS en transit ; cette bibliothèque se charge de la cryptographie au niveau du champ et des empreintes.
 4. **Migration** : conservez l'`identifier` de chaque version d'algorithme afin que les anciennes données puissent être déchiffrées puis rechiffrées.
+5. **Vous avez trouvé une vulnérabilité ?** Signalez-la en privé — voir [`SECURITY.md`](../../../SECURITY.md).
 
 ---
 

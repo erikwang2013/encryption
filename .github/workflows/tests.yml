@@ -1,0 +1,45 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phpunit:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 声明支持 ^8.0，就必须在 8.0 上真跑一遍：SM2 的反射调用、
+        # 以及任何 8.1+ 专属语法都只会在最低版本上暴露。
+        php: ['8.0', '8.1', '8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          # gmp 让 SM2 用例真正执行（默认会 skip），sodium 覆盖 XChaCha20。
+          extensions: gmp, sodium
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run the test suite
+        run: vendor/bin/phpunit
+
+      - name: Smoke-test the vanilla PHP example
+        run: php examples/plain-php/demo.php
+
+      - name: Lint every source file
+        run: find src tests examples -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null

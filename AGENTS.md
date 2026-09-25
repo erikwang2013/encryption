@@ -41,6 +41,8 @@ Tests must be green before any commit. Tests that need `ext-gmp` / `ext-sodium` 
 
 ## Release
 
-1. `vendor/bin/phpunit` green. Never use `--no-verify`. This is a Composer library — there is no phar or build artifact, so no packaging step.
+1. `vendor/bin/phpunit` green **and** the CI matrix green (`.github/workflows/tests.yml` runs the suite on PHP 8.0–8.4 with `gmp` + `sodium` enabled). The 8.0 job is the important one: it catches PHP 8.1+ syntax, reflection-visibility differences, and anything else that only breaks on the declared minimum. Never use `--no-verify`. This is a Composer library — there is no phar or build artifact, so no packaging step.
 2. Commit, push `main`, then create an incremental tag `vX.Y.Z` (patch = bug fix, minor = feature, major = breaking change).
 3. `gh release create vX.Y.Z` with a summary of what changed.
+
+Security issues are handled through [`SECURITY.md`](SECURITY.md), not the public issue tracker.

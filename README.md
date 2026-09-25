@@ -130,6 +130,33 @@ In coroutine mode, if keys come from remote config, cache the parsed value.
 
 Register `EncryptionManager` on the global `support` container in `config/plugin.php`, a custom `bootstrap`, or `support/bootstrap.php` if you use that pattern, or construct with `EncryptionManagerFactory::fromMasterKey(...)` inside service classes. webman does not mandate a specific container—**follow your project’s conventions**.
 
+**Vanilla PHP (no framework)**
+
+There is no container to hook into: `composer require` at the project root, then build the manager once and reuse it. A runnable version of this file lives in [`examples/plain-php/`](examples/plain-php) — `php examples/plain-php/demo.php` prints a full encrypt → store → read → decrypt → tamper-detection cycle.
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+Notes for plain PHP projects: the factory is the expensive part (it derives every subkey and registers every encryptor), so call it once per process and reuse the instance rather than per query; keep the key in the process environment or your own secret store, and back it up — losing it means losing the data; catch `EncryptionException` around reads and log server-side instead of echoing the reason to the client; ciphertext is binary, so store `base64_encode(...)` in a `TEXT` column or the raw blob in a `BLOB` column.
+
 ### Unrelated to this library
 
 - Framework upgrades (e.g. Laravel 10 → 11) usually **do not** require API changes here. If Composer reports a PHP version conflict, follow this package’s `php` constraint in `composer.json`.
@@ -452,6 +479,7 @@ encryption/
 │   ├── i18n/                        this README in 12 more languages, each with
 │   │                                localised copies of the diagrams (+ labels/*.json)
 │   └── *.md                         archived review / test reports
+├── examples/plain-php/              runnable vanilla-PHP integration (bootstrap + demo)
 ├── scripts/i18n-build-svg.php       builds docs/i18n/<lang>/*.svg from the label dictionaries
 ├── composer.json                    psr-4 autoload, PHP ^8.0, phpunit dev dependency
 ├── phpunit.xml.dist

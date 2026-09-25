@@ -130,6 +130,33 @@ En modo corrutina, si las claves provienen de configuración remota, cachea el v
 
 Registra `EncryptionManager` en el contenedor global `support` desde `config/plugin.php`, un `bootstrap` propio o `support/bootstrap.php` si usas ese patrón, o constrúyelo con `EncryptionManagerFactory::fromMasterKey(...)` dentro de las clases de servicio. webman no impone un contenedor concreto: **sigue las convenciones de tu proyecto**.
 
+**Vanilla PHP (sin framework)**
+
+No hay ningún contenedor donde registrarse: ejecuta `composer require` en la raíz del proyecto y luego construye el gestor una sola vez y reutilízalo. En [`examples/plain-php/`](../../../examples/plain-php) hay una versión ejecutable de este apartado: `php examples/plain-php/demo.php` imprime un ciclo completo de cifrado → almacenamiento → lectura → descifrado → detección de manipulación.
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+Notas para proyectos PHP puros: la parte costosa es la factoría (deriva todas las subclaves y registra cada cifrador), así que llámala una vez por proceso y reutiliza la instancia en lugar de crearla en cada consulta; guarda la clave en el entorno del proceso o en tu propio almacén de secretos, y haz copia de seguridad — perderla significa perder los datos; captura `EncryptionException` en las lecturas y registra en el servidor en vez de devolver el motivo al cliente; el texto cifrado es binario, así que guarda `base64_encode(...)` en una columna `TEXT` o los bytes sin procesar en una columna `BLOB`.
+
 ### Ajeno a esta biblioteca
 
 - Las actualizaciones de framework (p. ej. Laravel 10 → 11) normalmente **no** exigen cambios de API aquí. Si Composer informa de un conflicto de versión de PHP, respeta la restricción `php` de este paquete en `composer.json`.
@@ -450,6 +477,7 @@ encryption/
 │   ├── functional-design.svg        incluido en «Diseño funcional»
 │   ├── lifecycle.svg                incluido en «Ciclo de vida de una petición»
 │   └── *.md                         informes archivados de revisión / pruebas
+├── examples/plain-php/              integración Vanilla PHP ejecutable (bootstrap + demo)
 ├── composer.json                    autocarga psr-4, PHP ^8.0, phpunit como dependencia de desarrollo
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

@@ -130,6 +130,33 @@ return [
 
 Зарегистрируйте `EncryptionManager` в глобальном контейнере `support` в `config/plugin.php`, в собственном `bootstrap` или в `support/bootstrap.php`, если вы используете такой подход, либо создавайте его через `EncryptionManagerFactory::fromMasterKey(...)` внутри сервисных классов. webman не навязывает конкретный контейнер — **следуйте соглашениям своего проекта**.
 
+**Vanilla PHP (без фреймворка)**
+
+Контейнера, в который можно зарегистрироваться, здесь нет: выполните `composer require` в корне проекта, а затем создайте менеджер один раз и переиспользуйте его. Рабочий вариант этого раздела лежит в [`examples/plain-php/`](../../../examples/plain-php) — `php examples/plain-php/demo.php` печатает полный цикл шифрование → сохранение → чтение → расшифровка → обнаружение подмены.
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+Замечания для проектов на чистом PHP: самое дорогое здесь — фабрика (она выводит все подключи и регистрирует каждый шифратор), поэтому вызывайте её один раз на процесс и переиспользуйте экземпляр, а не создавайте его на каждый запрос; храните ключ в окружении процесса или в собственном хранилище секретов и делайте резервную копию — его потеря означает потерю данных; перехватывайте `EncryptionException` при чтении и логируйте на сервере, вместо того чтобы возвращать причину клиенту; шифртекст бинарный, поэтому сохраняйте `base64_encode(...)` в столбце `TEXT` или необработанный набор байтов в столбце `BLOB`.
+
 ### Что не связано с этой библиотекой
 
 - Обновление фреймворка (например, Laravel 10 → 11) обычно **не** требует правок этого API. Если Composer сообщает о конфликте версий PHP, ориентируйтесь на ограничение `php` в `composer.json` этого пакета.
@@ -450,6 +477,7 @@ encryption/
 │   ├── functional-design.svg        встроена в «Функциональный дизайн»
 │   ├── lifecycle.svg                встроена в «Жизненный цикл запроса»
 │   └── *.md                         архивные отчёты о ревью и тестировании
+├── examples/plain-php/              рабочий пример интеграции на чистом PHP (bootstrap + демо)
 ├── composer.json                    автозагрузка psr-4, PHP ^8.0, phpunit как dev-зависимость
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

@@ -130,6 +130,33 @@ return [
 
 `config/plugin.php`, 사용자 정의 `bootstrap`, 또는 그 방식을 쓴다면 `support/bootstrap.php`에서 전역 `support` 컨테이너에 `EncryptionManager`를 등록하거나, 서비스 클래스 안에서 `EncryptionManagerFactory::fromMasterKey(...)`로 직접 생성하세요. webman은 특정 컨테이너를 강제하지 않으므로 **프로젝트 관례를 따르면 됩니다**.
 
+**바닐라 PHP(프레임워크 없음)**
+
+연결할 컨테이너가 없습니다. 프로젝트 루트에서 `composer require`를 실행한 뒤 매니저를 한 번만 만들어 재사용하면 됩니다. 이 절을 그대로 실행할 수 있는 예제가 [`examples/plain-php/`](../../../examples/plain-php)에 있으며, `php examples/plain-php/demo.php`를 실행하면 암호화 → 저장 → 읽기 → 복호화 → 변조 감지의 전체 흐름을 출력합니다.
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+순수 PHP 프로젝트를 위한 참고 사항: 비용이 큰 부분은 팩토리입니다(모든 하위 키를 유도하고 각 암호화기를 등록합니다). 따라서 쿼리마다가 아니라 프로세스당 한 번만 호출하고 같은 인스턴스를 재사용하세요. 키는 프로세스 환경 변수나 자체 시크릿 저장소에 두고 반드시 백업하세요. 키를 잃으면 데이터도 잃습니다. 읽을 때는 `EncryptionException`을 잡아 이유를 클라이언트에 그대로 돌려주지 말고 서버 측에 로깅하세요. 암호문은 바이너리이므로 `base64_encode(...)` 값을 `TEXT` 컬럼에, 또는 원본 바이트를 `BLOB` 컬럼에 저장하세요.
+
 ### 이 라이브러리와 무관한 사항
 
 - 프레임워크 업그레이드(예: Laravel 10 → 11)는 보통 이 라이브러리의 API 변경을 **요구하지 않습니다**. Composer가 PHP 버전 충돌을 보고하면 `composer.json`에 있는 이 패키지의 `php` 제약을 따르세요.
@@ -450,6 +477,7 @@ encryption/
 │   ├── functional-design.svg        “기능 설계”에 포함
 │   ├── lifecycle.svg                “요청 생명주기”에 포함
 │   └── *.md                         리뷰 / 테스트 보고서 아카이브
+├── examples/plain-php/              실행 가능한 바닐라 PHP 통합 (부트스트랩 + 데모)
 ├── composer.json                    psr-4 오토로드, PHP ^8.0, phpunit 개발 의존성
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

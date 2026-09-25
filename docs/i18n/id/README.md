@@ -130,6 +130,33 @@ Dalam mode coroutine, jika kunci berasal dari konfigurasi jarak jauh, cache nila
 
 Daftarkan `EncryptionManager` pada container `support` global di `config/plugin.php`, pada `bootstrap` kustom, atau di `support/bootstrap.php` jika Anda memakai pola itu, atau buat instansnya dengan `EncryptionManagerFactory::fromMasterKey(...)` di dalam kelas service. webman tidak mewajibkan container tertentu—**ikuti konvensi proyek Anda**.
 
+**Vanilla PHP (tanpa framework)**
+
+Tidak ada container untuk tempat mendaftar: jalankan `composer require` di akar proyek, lalu bangun manager sekali dan pakai ulang. Versi yang bisa dijalankan dari bagian ini ada di [`examples/plain-php/`](../../../examples/plain-php) — `php examples/plain-php/demo.php` mencetak siklus lengkap enkripsi → simpan → baca → dekripsi → deteksi perubahan.
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+Catatan untuk proyek PHP murni: bagian yang mahal adalah factory-nya (ia menurunkan semua subkunci dan mendaftarkan setiap enkriptor), jadi panggil sekali per proses dan pakai ulang instansnya, bukan sekali per kueri; simpan kunci di environment proses atau penyimpanan rahasia Anda sendiri, dan cadangkan — kehilangannya berarti kehilangan datanya; tangkap `EncryptionException` di sekitar pembacaan dan catat di sisi server alih-alih mengembalikan alasannya ke klien; ciphertext bersifat biner, jadi simpan `base64_encode(...)` di kolom `TEXT` atau byte mentahnya di kolom `BLOB`.
+
 ### Hal yang tidak terkait dengan pustaka ini
 
 - Peningkatan versi framework (misalnya Laravel 10 → 11) biasanya **tidak** memerlukan perubahan API di sini. Jika Composer melaporkan konflik versi PHP, ikuti batasan `php` paket ini di `composer.json`.
@@ -450,6 +477,7 @@ encryption/
 │   ├── functional-design.svg        disematkan di “Desain fungsional”
 │   ├── lifecycle.svg                disematkan di “Siklus hidup permintaan”
 │   └── *.md                         arsip laporan review / pengujian
+├── examples/plain-php/              integrasi Vanilla PHP yang bisa dijalankan (bootstrap + demo)
 ├── composer.json                    autoload psr-4, PHP ^8.0, dependensi dev phpunit
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

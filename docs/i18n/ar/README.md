@@ -130,6 +130,33 @@ return [
 
 سجّل `EncryptionManager` في حاوية `support` العامة داخل `config/plugin.php`، أو في `bootstrap` مخصّص، أو في `support/bootstrap.php` إن كنت تستخدم هذا النمط، أو أنشئها عبر `EncryptionManagerFactory::fromMasterKey(...)` داخل أصناف الخدمة. لا يفرض webman حاوية بعينها — **فاتبع اصطلاحات مشروعك**.
 
+**Vanilla PHP (بدون إطار عمل)**
+
+لا توجد حاوية يمكن التسجيل فيها: نفّذ `composer require` في جذر المشروع، ثم ابنِ المدير مرة واحدة وأعد استخدامه. وتوجد نسخة قابلة للتشغيل من هذا القسم في [`examples/plain-php/`](../../../examples/plain-php) — ويطبع `php examples/plain-php/demo.php` دورة كاملة: تشفير → تخزين → قراءة → فك تشفير → كشف التلاعب.
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+ملاحظات لمشاريع PHP المجرّدة: الجزء المكلف هو الـ factory (فهي تشتق كل المفاتيح الفرعية وتسجّل كل أداة تشفير)، لذا استدعها مرة واحدة لكل عملية (process) وأعد استخدام النسخة ذاتها بدل إنشائها مع كل استعلام؛ واحفظ المفتاح في بيئة العملية أو في مخزن أسرار خاص بك مع نسخة احتياطية — ففقدانه يعني فقدان البيانات؛ والتقط `EncryptionException` عند القراءة وسجّل الخطأ على الخادم بدلًا من إعادة السبب إلى العميل؛ والنص المشفَّر بيانات ثنائية، لذا خزّن `base64_encode(...)` في عمود `TEXT` أو البايتات الخام في عمود `BLOB`.
+
 ### مسائل لا تتعلق بهذه المكتبة
 
 - ترقيات إطار العمل (مثل الانتقال من Laravel 10 إلى 11) **لا** تتطلب عادةً أي تغيير في واجهات هذه المكتبة. وإذا أبلغ Composer عن تعارض في إصدار PHP، فاتبع قيد `php` الخاص بهذه الحزمة في `composer.json`.
@@ -450,6 +477,7 @@ encryption/
 │   ├── functional-design.svg        مُضمَّن في «التصميم الوظيفي»
 │   ├── lifecycle.svg                مُضمَّن في «دورة حياة الطلب»
 │   └── *.md                         أرشيف تقارير المراجعة والاختبارات
+├── examples/plain-php/              تكامل Vanilla PHP قابل للتشغيل (bootstrap + عرض توضيحي)
 ├── composer.json                    تحميل psr-4 التلقائي، PHP ^8.0، اعتمادية phpunit للتطوير
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

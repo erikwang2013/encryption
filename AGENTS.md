@@ -36,7 +36,8 @@ Tests must be green before any commit. Tests that need `ext-gmp` / `ext-sodium` 
 - Write source comments in the existing Chinese docblock style; keep prose in `README.zh-CN.md` in step with `README.md`.
 - Code, class names, method names, algorithm identifiers and file paths are never translated: in `docs/i18n/labels/*.json` they live in the `"keep"` list, prose lives in `"translate"`.
 - `docs/i18n/<lang>/*.svg` are **generated** — edit the label dictionary and rebuild, never the SVG.
-- Keep every file under 500 lines; new code goes in `src/`, tests in `tests/`, tooling in `scripts/`, documents and images in `docs/`.
+- Keep every file under 500 lines; new code goes in `src/`, tests in `tests/`, tooling in `scripts/`, documents and images in `docs/`, runnable integrations in `examples/`.
+- `examples/plain-php/` is the framework-free integration path — it must stay runnable (`php examples/plain-php/demo.php`) and is covered by `tests/PlainPhpExampleTest.php`.
 
 ## Release
 

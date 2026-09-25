@@ -130,6 +130,33 @@ return [
 
 在 `config/plugin.php` / 自定义 `bootstrap` 或 `support/bootstrap.php` 中把 `EncryptionManager` 挂到全局 `support` 容器（若使用），或直接在需要的服务类构造函数里用 `EncryptionManagerFactory::fromMasterKey(...)` 构造；webman 无强制容器约定，**以项目现有组织方式为准**。
 
+**原生 PHP（无框架）**
+
+没有容器可挂：在项目根目录 `composer require` 后，构建一次管理器并复用即可。可直接运行的同款示例见 [`examples/plain-php/`](examples/plain-php)——`php examples/plain-php/demo.php` 会打印完整的「加密 → 存储 → 读取 → 解密 → 篡改检测」流程。
+
+```php
+// bootstrap.php —— 在入口文件里 require 一次
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // 32 字节随机密钥的 base64
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY 必须是 32 字节的 base64。');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// 项目任意位置
+$stored = base64_encode($manager->encrypt($phone));   // 存入 TEXT 字段
+$phone  = $manager->decrypt(base64_decode($stored));  // 读取后解密
+```
+
+```bash
+# 密钥只生成一次，放在服务端环境变量里，不要写进代码
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+纯 PHP 项目注意事项：工厂是「重」操作（要派生各算法子密钥并注册全部实现），每个进程构建一次并复用实例，不要每次查询都构造；密钥放在进程环境变量或你自己的密钥服务里并做好备份——丢失即无法解密历史数据；读取时捕获 `EncryptionException`，只记服务端日志，不要把失败原因回显给客户端；密文是二进制，文本字段存 `base64_encode(...)`，二进制字段直接存原始 blob。
+
 ### 与本库无关的说明
 
 - 框架版本升级（如 Laravel 10 → 11）一般**不需要**改本库 API；若 Composer 提示 PHP 版本冲突，以本库 `composer.json` 中 `php` 约束为准。
@@ -452,6 +479,7 @@ encryption/
 │   ├── i18n/                        本 README 的另外 12 种语言版本，
 │   │                                每种语言各带一份本地化设计图（含 labels/*.json）
 │   └── *.md                         评审 / 测试报告存档
+├── examples/plain-php/              可直接运行的纯 PHP 接入示例（bootstrap + demo）
 ├── scripts/i18n-build-svg.php       由词条字典生成 docs/i18n/<lang>/*.svg
 ├── composer.json                    psr-4 自动加载、PHP ^8.0、phpunit 开发依赖
 ├── phpunit.xml.dist

@@ -130,6 +130,33 @@ return [
 
 `config/plugin.php` のグローバルな `support` コンテナ、独自の `bootstrap`、またはその方式を使う場合は `support/bootstrap.php` に `EncryptionManager` を登録するか、サービスクラス内で `EncryptionManagerFactory::fromMasterKey(...)` を使って生成します。webman は特定のコンテナを必須としていないため、**プロジェクトの慣習に従ってください**。
 
+**Vanilla PHP（フレームワークなし）**
+
+登録先となるコンテナがありません。プロジェクトのルートで `composer require` を実行し、マネージャーは一度だけ組み立てて再利用します。この節をそのまま動かせる版が [`examples/plain-php/`](../../../examples/plain-php) にあり、`php examples/plain-php/demo.php` を実行すると、暗号化 → 保存 → 読み出し → 復号 → 改ざん検知という一連の流れを出力します。
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+プレーン PHP プロジェクト向けの補足: コストがかかるのはファクトリの部分です（すべてのサブキーを導出し、各暗号化器を登録します）。そのためクエリごとではなくプロセスごとに一度だけ呼び出し、同じインスタンスを再利用してください。鍵はプロセスの環境変数か自前のシークレットストアに置き、必ずバックアップしてください（失うとデータも失われます）。読み出し時は `EncryptionException` を捕捉し、理由をクライアントに返さずサーバー側でログに記録してください。暗号文はバイナリなので、`base64_encode(...)` を `TEXT` カラムに、あるいは生のバイト列を `BLOB` カラムに保存します。
+
 ### 本ライブラリの対象外
 
 - フレームワークのアップグレード（例: Laravel 10 → 11）では、通常、本ライブラリの API 変更は**不要です**。Composer が PHP バージョンの競合を報告する場合は、本パッケージの `composer.json` にある `php` 制約に従ってください。
@@ -450,6 +477,7 @@ encryption/
 │   ├── functional-design.svg        「機能設計」に埋め込み
 │   ├── lifecycle.svg                「リクエストライフサイクル」に埋め込み
 │   └── *.md                         レビュー / テストレポートの保管
+├── examples/plain-php/              実行可能なバニラ PHP 統合（bootstrap + デモ）
 ├── composer.json                    psr-4 オートロード、PHP ^8.0、phpunit 開発依存
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

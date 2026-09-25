@@ -130,6 +130,33 @@ return [
 
 `config/plugin.php`-এ গ্লোবাল `support` কন্টেইনারে, কাস্টম `bootstrap`-এ, অথবা আপনি যদি সেই প্যাটার্ন ব্যবহার করেন তবে `support/bootstrap.php`-এ `EncryptionManager` রেজিস্টার করুন; কিংবা সার্ভিস ক্লাসের ভিতরে `EncryptionManagerFactory::fromMasterKey(...)` দিয়ে তৈরি করুন। webman কোনো নির্দিষ্ট কন্টেইনার চাপিয়ে দেয় না—**আপনার প্রকল্পের রীতিনীতি অনুসরণ করুন**।
 
+**ভ্যানিলা PHP (ফ্রেমওয়ার্ক ছাড়া)**
+
+এখানে নিবন্ধনের জন্য কোনো কন্টেইনার নেই: প্রজেক্ট রুটে `composer require` চালান, তারপর ম্যানেজার একবার তৈরি করে সেটিই পুনরায় ব্যবহার করুন। এই অংশটির চালানো-যোগ্য সংস্করণ আছে [`examples/plain-php/`](../../../examples/plain-php)-এ — `php examples/plain-php/demo.php` এনক্রিপশন → সংরক্ষণ → পড়া → ডিক্রিপশন → টেম্পার শনাক্তকরণের পূর্ণ চক্র দেখায়।
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+বিশুদ্ধ PHP প্রজেক্টের জন্য নোট: খরচের বড় অংশটি ফ্যাক্টরি (এটি সব সাব-কী ডিরাইভ করে এবং প্রতিটি এনক্রিপ্টর রেজিস্টার করে), তাই এটি প্রতি প্রসেসে একবার ডাকুন এবং প্রতি কুয়েরিতে নতুন না বানিয়ে একই ইনস্ট্যান্স পুনরায় ব্যবহার করুন; কী-টি প্রসেসের এনভায়রনমেন্ট বা নিজের সিক্রেট স্টোরে রাখুন এবং ব্যাকআপ রাখুন — এটি হারালে ডেটাও হারাবেন; পড়ার সময় `EncryptionException` ধরে কারণটি ক্লায়েন্টকে ফেরত না দিয়ে সার্ভারে লগ করুন; সাইফারটেক্সট বাইনারি, তাই `base64_encode(...)` একটি `TEXT` কলামে বা কাঁচা বাইট একটি `BLOB` কলামে সংরক্ষণ করুন।
+
 ### এই লাইব্রেরির সাথে সম্পর্কিত নয়
 
 - ফ্রেমওয়ার্ক আপগ্রেডে (যেমন Laravel 10 → 11) সাধারণত এখানে API পরিবর্তন লাগে **না**। Composer যদি PHP সংস্করণের দ্বন্দ্ব দেখায়, তবে `composer.json`-এ এই প্যাকেজের `php` শর্ত মেনে চলুন।
@@ -450,6 +477,7 @@ encryption/
 │   ├── functional-design.svg        「কার্যকরী ডিজাইন」-তে এমবেড করা
 │   ├── lifecycle.svg                「রিকোয়েস্ট লাইফসাইকেল」-তে এমবেড করা
 │   └── *.md                         সংরক্ষিত রিভিউ / টেস্ট রিপোর্ট
+├── examples/plain-php/              চালানো-যোগ্য ভ্যানিলা-PHP ইন্টিগ্রেশন (বুটস্ট্র্যাপ + ডেমো)
 ├── composer.json                    psr-4 অটোলোড, PHP ^8.0, phpunit ডেভ ডিপেন্ডেন্সি
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

@@ -130,6 +130,33 @@ Im Koroutinen-Modus sollten Sie den geparsten Wert zwischenspeichern, wenn die S
 
 Registrieren Sie `EncryptionManager` im globalen `support`-Container in `config/plugin.php`, in einem eigenen `bootstrap` oder in `support/bootstrap.php`, falls Sie dieses Muster verwenden, oder erzeugen Sie die Instanz in Service-Klassen mit `EncryptionManagerFactory::fromMasterKey(...)`. webman schreibt keinen bestimmten Container vor — **folgen Sie den Konventionen Ihres Projekts**.
 
+**Vanilla PHP (ohne Framework)**
+
+Es gibt keinen Container, in den Sie sich einklinken könnten: einmal `composer require` im Projektstamm, dann den Manager einmal aufbauen und wiederverwenden. Eine lauffähige Fassung dieses Abschnitts liegt in [`examples/plain-php/`](../../../examples/plain-php) — `php examples/plain-php/demo.php` zeigt einen vollständigen Zyklus aus Verschlüsseln → Speichern → Lesen → Entschlüsseln → Manipulationserkennung.
+
+```php
+// bootstrap.php — einmal aus Ihrem Front-Controller einbinden
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 von 32 zufälligen Bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// überall sonst im Projekt
+$stored = base64_encode($manager->encrypt($phone));   // als TEXT speichern
+$phone  = $manager->decrypt(base64_decode($stored));  // wieder auslesen
+```
+
+```bash
+# den Schlüssel einmal erzeugen und in der Serverumgebung halten — niemals im Code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+Hinweise für reine PHP-Projekte: Der teure Teil ist die Factory (sie leitet alle Unterschlüssel ab und registriert jeden Encryptor), rufen Sie sie deshalb einmal pro Prozess auf und verwenden Sie dieselbe Instanz weiter, statt sie pro Query neu zu erzeugen; halten Sie den Schlüssel in der Prozessumgebung oder in Ihrem eigenen Secret-Store und sichern Sie ihn — sein Verlust bedeutet Datenverlust; fangen Sie beim Lesen `EncryptionException` ab und protokollieren Sie serverseitig, statt den Grund an den Client auszugeben; Chiffretext ist binär, speichern Sie also `base64_encode(...)` in einer `TEXT`-Spalte oder den Rohblob in einer `BLOB`-Spalte.
+
 ### Nicht mit dieser Bibliothek zusammenhängend
 
 - Framework-Upgrades (z. B. Laravel 10 → 11) erfordern hier üblicherweise **keine** API-Änderungen. Meldet Composer einen PHP-Versionskonflikt, richten Sie sich nach der `php`-Vorgabe dieses Pakets in der `composer.json`.
@@ -450,6 +477,7 @@ encryption/
 │   ├── functional-design.svg        eingebettet in „Funktionales Design“
 │   ├── lifecycle.svg                eingebettet in „Lebenszyklus einer Anfrage“
 │   └── *.md                         archivierte Review- und Testberichte
+├── examples/plain-php/              lauffähige Vanilla-PHP-Integration (Bootstrap + Demo)
 ├── composer.json                    psr-4-Autoload, PHP ^8.0, phpunit als Dev-Abhängigkeit
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

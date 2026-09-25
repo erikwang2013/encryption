@@ -130,6 +130,33 @@ return [
 
 `EncryptionManager` को `config/plugin.php` के ग्लोबल `support` कंटेनर पर, किसी कस्टम `bootstrap` में, या यदि आप वह पैटर्न उपयोग करते हैं तो `support/bootstrap.php` में रजिस्टर करें; अथवा सेवा क्लासों के भीतर `EncryptionManagerFactory::fromMasterKey(...)` से बनाएँ। webman किसी विशिष्ट कंटेनर को अनिवार्य नहीं करता—**अपनी परियोजना की परंपराओं का पालन करें**।
 
+**वनीला PHP (बिना फ़्रेमवर्क)**
+
+यहाँ कोई कंटेनर नहीं है जिसमें रजिस्टर किया जाए: प्रोजेक्ट रूट में `composer require` चलाएँ, फिर मैनेजर एक बार बनाकर उसी को दोबारा इस्तेमाल करें। इस अनुभाग का चलाने योग्य संस्करण [`examples/plain-php/`](../../../examples/plain-php) में है — `php examples/plain-php/demo.php` एन्क्रिप्शन → संग्रहण → पढ़ना → डिक्रिप्शन → छेड़छाड़ पहचान का पूरा चक्र दिखाता है।
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+शुद्ध PHP प्रोजेक्ट के लिए नोट: महँगा हिस्सा फ़ैक्टरी है (यह हर सबकी व्युत्पन्न करती है और हर एन्क्रिप्टर रजिस्टर करती है), इसलिए इसे प्रति प्रोसेस एक बार बुलाएँ और हर क्वेरी के बजाय उसी इंस्टेंस को दोबारा इस्तेमाल करें; कुंजी को प्रोसेस के एनवायरनमेंट या अपने सीक्रेट स्टोर में रखें और उसका बैकअप रखें — इसे खोने का अर्थ डेटा खोना है; पढ़ते समय `EncryptionException` पकड़ें और कारण क्लाइंट को लौटाने के बजाय सर्वर-साइड लॉग करें; सिफ़रटेक्स्ट बाइनरी होता है, इसलिए `base64_encode(...)` को `TEXT` कॉलम में या कच्चे बाइट्स को `BLOB` कॉलम में संग्रहीत करें।
+
 ### इस लाइब्रेरी से असंबंधित
 
 - फ़्रेमवर्क अपग्रेड (जैसे Laravel 10 → 11) के लिए यहाँ सामान्यतः API में बदलाव **आवश्यक नहीं** होता। यदि Composer PHP संस्करण का टकराव बताए, तो `composer.json` में इस पैकेज की `php` शर्त का पालन करें।
@@ -450,6 +477,7 @@ encryption/
 │   ├── functional-design.svg        「कार्यात्मक डिज़ाइन」 में एम्बेडेड
 │   ├── lifecycle.svg                「अनुरोध जीवनचक्र」 में एम्बेडेड
 │   └── *.md                         संग्रहीत समीक्षा / परीक्षण रिपोर्ट
+├── examples/plain-php/              चलाने योग्य वनीला-PHP एकीकरण (बूटस्ट्रैप + डेमो)
 ├── composer.json                    psr-4 ऑटोलोड, PHP ^8.0, phpunit डेव निर्भरता
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

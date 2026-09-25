@@ -6,3 +6,18 @@ composer.lock
 .swarm
 .mcp.json
 ruvector.db
+
+# Ruflo local secrets and runtime data
+.env
+.env.local
+.env.*.local
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+
+# Codex local configuration
+.codex/
+.agents/
+
+# Claude Flow runtime data
+# Environment variables

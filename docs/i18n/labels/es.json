@@ -132,7 +132,7 @@
     "The identifier stored with the": "El identificador guardado con el",
     "record selects the implementation,": "registro elige la implementación,",
     "so old data keeps decrypting.": "así los datos antiguos se descifran.",
-    "Verify": "Validar",
+    "Verify": "Verificar",
     "Prefix and length are checked": "Se validan prefijo y longitud",
     "before the tag / MAC is compared": "antes de comparar el tag/MAC",
     "in constant time.": "en tiempo constante.",

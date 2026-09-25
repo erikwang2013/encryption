@@ -71,7 +71,7 @@
     <rect x="40" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
     <circle cx="66" cy="348" r="15" fill="#EEF2FF"/>
     <text x="66" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">5</text>
-    <text x="90" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Simpan</text>
+    <text x="90" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Penyimpanan</text>
     <line x1="60" y1="372" x2="225" y2="372" stroke="#E2E8F0"/>
     <text x="60" y="398" font-size="11" fill="#475569">Blob biner di kolom BLOB,</text>
     <text x="60" y="416" font-size="8.5" fill="#475569">atau base64 untuk penyimpanan teks.</text>
@@ -93,7 +93,7 @@
     <rect x="516" y="316" width="205" height="146" rx="14" fill="#FFFFFF" stroke="#A5B4FC"/>
     <circle cx="542" cy="348" r="15" fill="#EEF2FF"/>
     <text x="542" y="354" font-size="14" font-weight="700" fill="#4338CA" text-anchor="middle">7</text>
-    <text x="566" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Periksa</text>
+    <text x="566" y="353" font-size="14.5" font-weight="700" fill="#0F172A">Verifikasi</text>
     <line x1="536" y1="372" x2="701" y2="372" stroke="#E2E8F0"/>
     <text x="536" y="398" font-size="11" fill="#475569">Prefiks dan panjang diperiksa</text>
     <text x="536" y="416" font-size="11" fill="#475569">sebelum tag / MAC dibandingkan</text>

@@ -476,8 +476,11 @@ encryption/
 │   ├── architecture-design.svg      eingebettet in „Architekturüberblick“
 │   ├── functional-design.svg        eingebettet in „Funktionales Design“
 │   ├── lifecycle.svg                eingebettet in „Lebenszyklus einer Anfrage“
+│   ├── i18n/                        dieses README in 12 weiteren Sprachen, jeweils mit
+│   │                                lokalisierten Kopien der Diagramme (+ labels/*.json)
 │   └── *.md                         archivierte Review- und Testberichte
 ├── examples/plain-php/              lauffähige Vanilla-PHP-Integration (Bootstrap + Demo)
+├── scripts/i18n-build-svg.php       erzeugt docs/i18n/<lang>/*.svg aus den Label-Wörterbüchern
 ├── composer.json                    psr-4-Autoload, PHP ^8.0, phpunit als Dev-Abhängigkeit
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

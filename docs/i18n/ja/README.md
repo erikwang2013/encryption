@@ -476,8 +476,11 @@ encryption/
 │   ├── architecture-design.svg      「アーキテクチャ概要」に埋め込み
 │   ├── functional-design.svg        「機能設計」に埋め込み
 │   ├── lifecycle.svg                「リクエストライフサイクル」に埋め込み
+│   ├── i18n/                        この README の他 12 言語版。各言語に
+│   │                                図のローカライズ版を同梱（+ labels/*.json）
 │   └── *.md                         レビュー / テストレポートの保管
 ├── examples/plain-php/              実行可能なバニラ PHP 統合（bootstrap + デモ）
+├── scripts/i18n-build-svg.php       ラベル辞書から docs/i18n/<lang>/*.svg を生成
 ├── composer.json                    psr-4 オートロード、PHP ^8.0、phpunit 開発依存
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

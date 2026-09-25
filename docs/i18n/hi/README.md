@@ -476,8 +476,11 @@ encryption/
 │   ├── architecture-design.svg      「आर्किटेक्चर का अवलोकन」 में एम्बेडेड
 │   ├── functional-design.svg        「कार्यात्मक डिज़ाइन」 में एम्बेडेड
 │   ├── lifecycle.svg                「अनुरोध जीवनचक्र」 में एम्बेडेड
+│   ├── i18n/                        यह README 12 और भाषाओं में, हर एक में
+│   │                                आरेखों की स्थानीयकृत प्रतियाँ (+ labels/*.json)
 │   └── *.md                         संग्रहीत समीक्षा / परीक्षण रिपोर्ट
 ├── examples/plain-php/              चलाने योग्य वनीला-PHP एकीकरण (बूटस्ट्रैप + डेमो)
+├── scripts/i18n-build-svg.php       लेबल शब्दकोशों से docs/i18n/<lang>/*.svg बनाता है
 ├── composer.json                    psr-4 ऑटोलोड, PHP ^8.0, phpunit डेव निर्भरता
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

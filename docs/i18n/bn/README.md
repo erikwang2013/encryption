@@ -476,8 +476,11 @@ encryption/
 │   ├── architecture-design.svg      「আর্কিটেকচার পরিচিতি」-তে এমবেড করা
 │   ├── functional-design.svg        「কার্যকরী ডিজাইন」-তে এমবেড করা
 │   ├── lifecycle.svg                「রিকোয়েস্ট লাইফসাইকেল」-তে এমবেড করা
+│   ├── i18n/                        এই README আরও ১২টি ভাষায়, প্রতিটিতে
+│   │                                ডায়াগ্রামের স্থানীয়কৃত অনুলিপি (+ labels/*.json)
 │   └── *.md                         সংরক্ষিত রিভিউ / টেস্ট রিপোর্ট
 ├── examples/plain-php/              চালানো-যোগ্য ভ্যানিলা-PHP ইন্টিগ্রেশন (বুটস্ট্র্যাপ + ডেমো)
+├── scripts/i18n-build-svg.php       লেবেল অভিধান থেকে docs/i18n/<lang>/*.svg তৈরি করে
 ├── composer.json                    psr-4 অটোলোড, PHP ^8.0, phpunit ডেভ ডিপেন্ডেন্সি
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

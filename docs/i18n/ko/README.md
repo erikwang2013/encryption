@@ -476,8 +476,11 @@ encryption/
 │   ├── architecture-design.svg      “아키텍처 개요”에 포함
 │   ├── functional-design.svg        “기능 설계”에 포함
 │   ├── lifecycle.svg                “요청 생명주기”에 포함
+│   ├── i18n/                        이 README의 12개 언어판. 언어마다
+│   │                                다이어그램 현지화 사본 포함 (+ labels/*.json)
 │   └── *.md                         리뷰 / 테스트 보고서 아카이브
 ├── examples/plain-php/              실행 가능한 바닐라 PHP 통합 (부트스트랩 + 데모)
+├── scripts/i18n-build-svg.php       레이블 사전에서 docs/i18n/<lang>/*.svg 생성
 ├── composer.json                    psr-4 오토로드, PHP ^8.0, phpunit 개발 의존성
 ├── phpunit.xml.dist
 └── README.md  README.zh-CN.md

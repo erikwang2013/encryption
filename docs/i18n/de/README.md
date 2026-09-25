@@ -339,7 +339,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-Master-Key-Factory: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` leitet Unterschlüssel je Algorithmus ab und registriert **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128** und **sodium-xchacha20** (sofern ext-sodium verfügbar ist) in einem Schritt.
+Master-Key-Factory: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` leitet Unterschlüssel je Algorithmus ab und registriert **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128** und **sodium-xchacha20** (sofern ext-sodium verfügbar ist) in einem Schritt. Die Ableitung verwendet standardmäßig `'v1'`; übergeben Sie `'v2'` als drittes Argument für die korrigierte HMAC-Argumentreihenfolge (die beiden sind gegenseitig nicht lesbar — siehe §8).
 
 ### 2. Asymmetrische Verschlüsselung
 
@@ -441,6 +441,34 @@ SM1, SM7, SM9: `UnavailableNationalAlgorithms::sm1()` und die übrigen Methoden 
 ### 7. Ausnahmen
 
 Fehler werfen `Erikwang2013\Encryption\Exception\EncryptionException`; nicht verfügbare Nationalalgorithmen verwenden `UnsupportedNationalAlgorithmException`. Fangen Sie diese im Anwendungscode ab und protokollieren Sie sie; geben Sie keine Details an Clients weiter.
+
+### 8. Schlüsselableitungsschema v1 → v2 (optionale Migration)
+
+**Was falsch war.** Bei der Ableitung der Unterschlüssel je Algorithmus und der MAC-Schlüssel von `aes-256-cbc-hmac`, `sm4-cbc` und `zuc-128` wurde `hash_hmac($algo, $data, $key)` mit dem konstanten Nutzungslabel als HMAC-**Schlüssel** und dem geheimen Material als **Nachricht** aufgerufen — die beiden Argumente waren vertauscht. Der HMAC-Schlüssel muss das Geheimnis sein.
+
+**Warum nichts ausnutzbar ist.** Das Nutzungslabel ist eine öffentliche Konstante, und das Geheimnis fließt weiterhin in den HMAC ein; ein Angreifer ohne den Master-Key (oder den Chiffrierschlüssel) leitet nichts ab und fälscht nichts. Falsch war nur die Argumentreihenfolge, nicht die Stärke der Ableitung.
+
+**So wird umgestellt.** Übergeben Sie `'v2'` als drittes Argument. Lässt man es weg, bleibt das heutige Verhalten byteweise erhalten, sodass jede bestehende Aufrufstelle unverändert bleibt:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // Standard: unverändertes Verhalten
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // korrigierte HMAC-Reihenfolge
+```
+
+Jeder MAC-basierte Encryptor nimmt dieselbe Umschaltung als abschließendes optionales Argument entgegen — `new Sm4CbcEncryptor($key16, macDerivation: 'v2')`. Ein unbekannter Schemaname wirft `EncryptionException`, statt still auf v1 zurückzufallen.
+
+**Migration.** v1 und v2 leiten *unterschiedliche* Unterschlüssel und MAC-Schlüssel ab und sind daher nicht austauschbar: Ein v2-Manager kann v1-Chiffretext nicht entschlüsseln und ein v1-Manager keinen v2-Chiffretext (MAC-/Authentifizierungsfehler). Für das Schema gibt es keine Markierung in den übertragenen Daten — beide schreiben denselben `v1`-Payload-Präfix —, deshalb ist während einer Migration ein Lesevorgang mit dem falschen Schema nicht von einem manipulierten Chiffretext zu unterscheiden: Beides äußert sich als MAC-Fehler. Protokollieren Sie während der Migration das je Lesevorgang verwendete Schema und rechnen Sie bei solchen Fehlern zuerst mit einer Schema-Abweichung, bevor Sie eine Beschädigung vermuten. Erzeugen Sie beide Manager aus demselben Master-Key und lesen Sie zuerst, dann schreiben Sie:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // Altdaten lesen
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // neue Daten schreiben
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                       // 1. mit v1 entschlüsseln
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                            // 2. mit v2 neu verschlüsseln
+```
+
+Verschlüsseln Sie gespeicherte Daten neu (Sessions und Tokens eingeschlossen) und legen Sie den v1-Manager still, sobald kein v1-Chiffretext mehr vorhanden ist. Der Master-Key selbst ändert sich nicht: Der Wechsel des Ableitungsschemas ist keine Schlüsselrotation.
+
+**Nicht zu verwechseln mit dem Payload-Präfix.** Das `v1` im Payload-Aufbau `v1 | IV | MAC | ciphertext` ist eine *Chiffretextformat*-Version, nicht dieses Ableitungsschema — der Präfix bleibt unter v2 `v1`, und alte Blobs behalten ihren. Benennen Sie ihn nicht um.
 
 ---
 

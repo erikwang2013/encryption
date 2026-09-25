@@ -339,7 +339,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-Factory de chave mestra: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` deriva subchaves por algoritmo e registra **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128** e **sodium-xchacha20** (se a ext-sodium estiver disponível) de uma só vez.
+Factory de chave mestra: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` deriva subchaves por algoritmo e registra **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128** e **sodium-xchacha20** (se a ext-sodium estiver disponível) de uma só vez. A derivação usa `'v1'` por padrão; passe `'v2'` como terceiro argumento para obter a ordem de argumentos HMAC corrigida (os dois são mutuamente ilegíveis — veja o §8).
 
 ### 2. Criptografia assimétrica
 
@@ -441,6 +441,34 @@ SM1, SM7, SM9: `UnavailableNationalAlgorithms::sm1()` e métodos equivalentes la
 ### 7. Exceções
 
 Falhas lançam `Erikwang2013\Encryption\Exception\EncryptionException`; algoritmos nacionais indisponíveis usam `UnsupportedNationalAlgorithmException`. Capture e registre em log no código da aplicação; não vaze detalhes para os clientes.
+
+### 8. Esquema de derivação de chaves v1 → v2 (migração opcional)
+
+**O que estava errado.** Ao derivar as subchaves por algoritmo e as chaves MAC de `aes-256-cbc-hmac`, `sm4-cbc` e `zuc-128`, `hash_hmac($algo, $data, $key)` era chamada com o rótulo de uso constante como **chave** do HMAC e o material secreto como **mensagem** — os dois argumentos estavam trocados. A chave do HMAC deve ser o segredo.
+
+**Por que nada é explorável.** O rótulo de uso é uma constante pública e o segredo continua alimentando o HMAC; um atacante sem a chave mestra (ou sem a chave da cifra) não deriva nada e não forja nada. Apenas a ordem dos argumentos estava errada, não a força da derivação.
+
+**Como mudar.** Passe `'v2'` como terceiro argumento. Omiti-lo mantém o comportamento atual byte a byte, então nenhum ponto de chamada existente muda:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // default: unchanged behaviour
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // corrected HMAC order
+```
+
+Cada cifrador baseado em MAC aceita o mesmo interruptor como último argumento opcional — `new Sm4CbcEncryptor($key16, macDerivation: 'v2')`. Um nome de esquema desconhecido lança `EncryptionException` em vez de recorrer silenciosamente ao v1.
+
+**Migração.** v1 e v2 derivam subchaves e chaves MAC *diferentes*, portanto não são intercambiáveis: um manager v2 não consegue decifrar texto cifrado v1, e um manager v1 não consegue decifrar texto cifrado v2 (falha de MAC / autenticação). Não há marcador do esquema nos dados transmitidos — ambos escrevem o mesmo prefixo de carga útil `v1` —, então, durante uma migração, uma leitura com o esquema errado é indistinguível de um texto cifrado adulterado: as duas se manifestam como falha de MAC. Registre em log o esquema usado em cada leitura durante a migração e, diante dessas falhas, suspeite de incompatibilidade de esquema antes de suspeitar de corrupção. Construa os dois managers a partir da mesma chave mestra e leia primeiro, grave depois:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // read legacy data
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // write new data
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                       // 1. decrypt with v1
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                            // 2. re-encrypt with v2
+```
+
+Recifre os dados armazenados (sessões e tokens incluídos) e aposente o manager v1 quando não restar nenhum texto cifrado v1. A chave mestra em si não muda: trocar o esquema de derivação não é uma rotação de chaves.
+
+**Sem relação com o prefixo da carga útil.** O `v1` na estrutura de carga útil `v1 | IV | MAC | ciphertext` é uma versão do *formato do texto cifrado*, não deste esquema de derivação — o prefixo continua `v1` no v2, e os blobs antigos mantêm o seu. Não o renomeie.
 
 ---
 

@@ -339,7 +339,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-Factory kunci utama: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` menurunkan subkunci per algoritma dan mendaftarkan **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128**, dan **sodium-xchacha20** (jika ext-sodium tersedia) sekaligus.
+Factory kunci utama: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` menurunkan subkunci per algoritma dan mendaftarkan **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128**, dan **sodium-xchacha20** (jika ext-sodium tersedia) sekaligus. Derivasi secara default memakai `'v1'`; berikan `'v2'` sebagai argumen ketiga untuk urutan argumen HMAC yang diperbaiki (keduanya tidak dapat saling dibaca — lihat §8).
 
 ### 2. Enkripsi asimetris
 
@@ -441,6 +441,34 @@ SM1, SM7, SM9: `UnavailableNationalAlgorithms::sm1()` dan sejenisnya melempar `U
 ### 7. Eksepsi
 
 Kegagalan melempar `Erikwang2013\Encryption\Exception\EncryptionException`; algoritma nasional yang tidak tersedia memakai `UnsupportedNationalAlgorithmException`. Tangkap dan catat ke log di kode aplikasi; jangan bocorkan detailnya ke klien.
+
+### 8. Skema derivasi kunci v1 → v2 (migrasi opsional)
+
+**Apa yang salah.** Saat menurunkan subkunci per algoritma dan kunci MAC dari `aes-256-cbc-hmac`, `sm4-cbc`, dan `zuc-128`, `hash_hmac($algo, $data, $key)` dipanggil dengan label penggunaan yang konstan sebagai **kunci** HMAC dan materi rahasia sebagai **pesan** — kedua argumen tertukar. Kunci HMAC haruslah materi rahasia itu.
+
+**Mengapa tidak bisa dieksploitasi.** Label penggunaan adalah konstanta publik dan materi rahasia tetap masuk ke HMAC; penyerang tanpa kunci master (atau kunci cipher) tidak menurunkan apa pun dan tidak memalsukan apa pun. Hanya urutan argumennya yang salah, bukan kekuatan derivasinya.
+
+**Cara beralih.** Berikan `'v2'` sebagai argumen ketiga. Menghilangkannya mempertahankan perilaku saat ini byte per byte, sehingga setiap titik pemanggilan yang ada tidak berubah:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // default: unchanged behaviour
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // corrected HMAC order
+```
+
+Setiap enkriptor berbasis MAC menerima sakelar yang sama sebagai argumen opsional terakhir — `new Sm4CbcEncryptor($key16, macDerivation: 'v2')`. Nama skema yang tidak dikenal melempar `EncryptionException` alih-alih diam-diam kembali ke v1.
+
+**Migrasi.** v1 dan v2 menurunkan subkunci dan kunci MAC yang *berbeda*, jadi keduanya tidak dapat dipertukarkan: manager v2 tidak dapat mendekripsi ciphertext v1 dan manager v1 tidak dapat mendekripsi ciphertext v2 (kegagalan MAC / autentikasi). Tidak ada penanda skema pada data yang dikirim — keduanya menulis prefiks payload `v1` yang sama — sehingga selama migrasi, pembacaan dengan skema yang salah tidak dapat dibedakan dari ciphertext yang dirusak: keduanya muncul sebagai kegagalan MAC. Catat di log skema yang dipakai untuk setiap pembacaan selama migrasi, dan anggap kegagalan semacam itu sebagai ketidakcocokan skema sebelum menduga adanya korupsi. Bangun kedua manager dari kunci master yang sama lalu baca dulu, tulis kemudian:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // read legacy data
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // write new data
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                       // 1. decrypt with v1
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                            // 2. re-encrypt with v2
+```
+
+Enkripsi ulang data yang tersimpan (termasuk sesi dan token) dan pensiunkan manager v1 begitu tidak ada lagi ciphertext v1. Kunci master sendiri tidak berubah: mengganti skema derivasi bukanlah rotasi kunci.
+
+**Tidak terkait dengan prefiks payload.** `v1` pada struktur payload `v1 | IV | MAC | ciphertext` adalah versi *format ciphertext*, bukan skema derivasi ini — prefiks tetap `v1` pada v2, dan blob lama mempertahankan miliknya. Jangan mengganti namanya.
 
 ---
 

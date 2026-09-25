@@ -1,0 +1,43 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Cannot access offset int\<\-1, max\> on string\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: examples/plain-php/demo.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: examples/plain-php/demo.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Encryptor/SodiumXChaCha20Encryptor.php
+
+		-
+			message: '#^Property Erikwang2013\\Encryption\\Guomi\\Internal\\ZucEngine\:\:\$lfsr \(list\<int\>\) does not accept non\-empty\-array\<int, int\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Guomi/Internal/ZucEngine.php
+
+		-
+			message: '#^Property Erikwang2013\\Encryption\\Guomi\\Internal\\ZucEngine\:\:\$lfsr \(list\<int\>\) does not accept non\-empty\-array\<int\<0, max\>, int\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Guomi/Internal/ZucEngine.php
+
+		-
+			message: '#^Call to function method_exists\(\) with ''CryptoSm\\\\SM2\\\\Sm2'' and ''pointMultiply'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Guomi/Sm2EncryptionService.php
+
+		-
+			message: '#^Parameter \#4 \$iterations of function hash_pbkdf2 expects int\<1, max\>, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Kdf/Pbkdf2Sha256.php

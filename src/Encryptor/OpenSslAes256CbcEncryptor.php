@@ -28,10 +28,17 @@ final class OpenSslAes256CbcEncryptor implements EncryptorInterface
     public function __construct(
         private string $key,
         private string $identifier = 'aes-256-cbc-hmac',
+        private string $macDerivation = 'v1',
     ) {
         if (strlen($this->key) !== self::KEY_LEN) {
             throw new EncryptionException(sprintf('AES-256-CBC key must be exactly %d bytes.', self::KEY_LEN));
         }
+        $this->assertMacKeyScheme($this->macDerivation);
+    }
+
+    protected function macKeyScheme(): string
+    {
+        return $this->macDerivation;
     }
 
     public function getIdentifier(): string

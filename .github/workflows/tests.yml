@@ -43,3 +43,26 @@ jobs:
 
       - name: Lint every source file
         run: find src tests examples -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+
+  static-analysis:
+    name: PHPStan + i18n
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          # 静态分析不随 PHP 版本变化（phpstan.neon 里钉了 phpVersion: 80000），
+          # 因此不进矩阵，单版本跑一次；mbstring 供 i18n 校验生成 Unicode 锚点。
+          php-version: '8.3'
+          extensions: mbstring
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run static analysis
+        run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Verify translated READMEs are in sync
+        run: php scripts/i18n-verify.php

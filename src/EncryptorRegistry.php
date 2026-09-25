@@ -8,8 +8,12 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption;
 
+use Erikwang2013\Encryption\Contract\EncryptorInterface;
+
 /**
  * 注册多种加密实现，按标识解析；可运行时注册自定义插件。
+ *
+ * @extends AbstractRegistry<EncryptorInterface>
  */
 final class EncryptorRegistry extends AbstractRegistry
 {

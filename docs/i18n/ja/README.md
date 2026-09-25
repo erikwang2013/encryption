@@ -339,7 +339,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-マスターキーファクトリ: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` はアルゴリズムごとのサブキーを導出し、**aes-256-gcm**、**aes-256-cbc-hmac**、**sm4-cbc**、**zuc-128**、および **sodium-xchacha20**（ext-sodium が利用可能な場合）を一度に登録します。
+マスターキーファクトリ: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` はアルゴリズムごとのサブキーを導出し、**aes-256-gcm**、**aes-256-cbc-hmac**、**sm4-cbc**、**zuc-128**、および **sodium-xchacha20**（ext-sodium が利用可能な場合）を一度に登録します。 導出は既定で `'v1'` です。修正された HMAC 引数順を使うには、第 3 引数に `'v2'` を渡します（両者は相互に読めません — §8 参照）。
 
 ### 2. 公開鍵暗号
 
@@ -441,6 +441,34 @@ SM1、SM7、SM9: `UnavailableNationalAlgorithms::sm1()` などを呼び出すと
 ### 7. 例外
 
 失敗時は `Erikwang2013\Encryption\Exception\EncryptionException` がスローされます。利用できない国密アルゴリズムでは `UnsupportedNationalAlgorithmException` を使用します。アプリケーションコード側で捕捉してログに記録し、詳細をクライアントに漏らさないでください。
+
+### 8. 鍵導出スキーム v1 → v2（オプトイン移行）
+
+**何が問題だったか。** アルゴリズム別サブキーと `aes-256-cbc-hmac`、`sm4-cbc`、`zuc-128` の MAC キーを導出する際、`hash_hmac($algo, $data, $key)` の HMAC **キー**に定数の用途ラベルを、**メッセージ**に秘密素材を渡していました — 引数が逆だったのです。HMAC のキーは秘密素材でなければなりません。
+
+**なぜ悪用できないか。** 用途ラベルは公開の定数であり、秘密素材は依然として HMAC に入力されています。マスターキー（または暗号キー）を持たない攻撃者は何も導出できず、何も偽造できません。誤っていたのは引数の順序だけで、導出の強度ではありません。
+
+**切り替え方法。** 第 3 引数に `'v2'` を渡します。省略すれば現在の挙動がバイト単位で維持されるため、既存の呼び出し箇所はすべて変更不要です:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // default: unchanged behaviour
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // corrected HMAC order
+```
+
+MAC を使う各暗号化器は、末尾の省略可能な引数として同じ切り替えを受け取ります — `new Sm4CbcEncryptor($key16, macDerivation: 'v2')`。未知のスキーム名は、暗黙に v1 へフォールバックせず `EncryptionException` を投げます。
+
+**移行。** v1 と v2 は*異なる*サブキーと MAC キーを導出するため、互換性はありません。v2 のマネージャーは v1 の暗号文を復号できず、v1 のマネージャーは v2 の暗号文を復号できません（MAC / 認証の失敗）。スキームを示す情報はデータ上にありません — どちらも同じ `v1` ペイロードプレフィックスを書き込みます — そのため移行中は、スキーム違いの読み取りと改ざんされた暗号文を区別できず、いずれも MAC 失敗として現れます。移行中は読み取りごとに使用したスキームをログに記録し、こうした失敗は破損を疑う前にスキームの不一致を疑ってください。両方のマネージャーを同じマスターキーから構築し、読んでから書きます:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // read legacy data
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // write new data
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                       // 1. decrypt with v1
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                            // 2. re-encrypt with v2
+```
+
+保存済みデータ（セッションやトークンを含む）を再暗号化し、v1 の暗号文が残らなくなったら v1 マネージャーを退役させます。マスターキー自体は変わりません。導出スキームの切り替えは鍵のローテーションではありません。
+
+**ペイロードのプレフィックスとは無関係。** `v1 | IV | MAC | ciphertext` というペイロード構成の `v1` は*暗号文フォーマット*のバージョンであり、この導出スキームとは別物です — v2 でもプレフィックスは `v1` のままで、既存のブロブはそれぞれの値を保ちます。名前を変更しないでください。
 
 ---
 

@@ -29,10 +29,17 @@ final class ZucEncryptor implements EncryptorInterface
     public function __construct(
         private string $key,
         private string $identifier = 'zuc-128',
+        private string $macDerivation = 'v1',
     ) {
         if (strlen($this->key) !== 16) {
             throw new EncryptionException('ZUC key must be exactly 16 bytes.');
         }
+        $this->assertMacKeyScheme($this->macDerivation);
+    }
+
+    protected function macKeyScheme(): string
+    {
+        return $this->macDerivation;
     }
 
     public function getIdentifier(): string
@@ -62,18 +69,8 @@ final class ZucEncryptor implements EncryptorInterface
     private function xorKeystream(string $key, string $iv, string $data): string
     {
         $engine = new ZucEngine($key, $iv);
-        $len = strlen($data);
-        // 批量生成与明文等长的密钥流，尾部不足 16 字节用 substr 截断补齐（密钥流与明文长度必须一致，
-        // 否则 PHP 字符串 XOR 会静默截断到短者，丢失尾部数据）
-        $ks = '';
-        $full = intdiv($len, 16);
-        for ($j = 0; $j < $full; $j++) {
-            $ks .= pack('N4', $engine->nextKey(), $engine->nextKey(), $engine->nextKey(), $engine->nextKey());
-        }
-        for ($j = $full * 16; $j < $len; $j += 4) {
-            $ks .= substr(pack('N', $engine->nextKey()), 0, min(4, $len - $j));
-        }
-
-        return $data ^ $ks;
+        // 密钥流长度必须与数据严格相等，否则 PHP 字符串 XOR 会静默截断到短者并丢失尾部数据；
+        // ZucEngine::keystream() 按此保证长度（含不足 4 字节的尾巴）。
+        return $data ^ $engine->keystream(strlen($data));
     }
 }

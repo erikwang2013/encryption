@@ -339,7 +339,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-마스터 키 팩토리: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')`는 알고리즘별 서브키를 유도하고 **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128**, **sodium-xchacha20**(ext-sodium을 쓸 수 있을 때)을 한 번에 등록합니다.
+마스터 키 팩토리: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')`는 알고리즘별 서브키를 유도하고 **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128**, **sodium-xchacha20**(ext-sodium을 쓸 수 있을 때)을 한 번에 등록합니다. 유도는 기본적으로 `'v1'`을 사용합니다. 수정된 HMAC 인자 순서를 쓰려면 세 번째 인수로 `'v2'`를 전달하세요(두 방식은 서로 읽을 수 없습니다 — §8 참고).
 
 ### 2. 비대칭키 암호화
 
@@ -441,6 +441,34 @@ SM1, SM7, SM9: `UnavailableNationalAlgorithms::sm1()` 같은 메서드는 `Unsup
 ### 7. 예외
 
 실패하면 `Erikwang2013\Encryption\Exception\EncryptionException`이 발생하며, 지원하지 않는 국가 표준 알고리즘은 `UnsupportedNationalAlgorithmException`을 사용합니다. 애플리케이션 코드에서 예외를 잡아 로그로 남기고, 클라이언트에는 세부 정보를 흘리지 마세요.
+
+### 8. 키 유도 방식 v1 → v2(선택적 마이그레이션)
+
+**무엇이 잘못되었나.** 알고리즘별 하위 키와 `aes-256-cbc-hmac`, `sm4-cbc`, `zuc-128`의 MAC 키를 유도할 때 `hash_hmac($algo, $data, $key)`의 HMAC **키** 자리에 상수 용도 레이블을, **메시지** 자리에 비밀 자료를 넘기고 있었습니다 — 두 인자가 뒤바뀐 것입니다. HMAC 키는 비밀 자료여야 합니다.
+
+**왜 악용할 수 없는가.** 용도 레이블은 공개 상수이고 비밀 자료는 여전히 HMAC에 입력됩니다. 마스터 키(또는 암호 키)가 없는 공격자는 아무것도 유도하거나 위조할 수 없습니다. 잘못된 것은 인자 순서뿐이며 유도의 강도가 아닙니다.
+
+**전환 방법.** 세 번째 인수로 `'v2'`를 전달하세요. 생략하면 현재 동작이 바이트 단위로 그대로 유지되므로 기존 호출 지점은 모두 변경할 필요가 없습니다:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // default: unchanged behaviour
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // corrected HMAC order
+```
+
+MAC 기반 암호화기는 모두 같은 스위치를 마지막 선택적 인수로 받습니다 — `new Sm4CbcEncryptor($key16, macDerivation: 'v2')`. 알 수 없는 스킴 이름은 조용히 v1로 폴백하지 않고 `EncryptionException`을 던집니다.
+
+**마이그레이션.** v1과 v2는 *서로 다른* 하위 키와 MAC 키를 유도하므로 호환되지 않습니다. v2 매니저는 v1 암호문을 복호화할 수 없고, v1 매니저는 v2 암호문을 복호화할 수 없습니다(MAC/인증 실패). 스킴을 나타내는 표식은 데이터에 없습니다 — 둘 다 같은 `v1` 페이로드 접두사를 기록합니다 — 따라서 마이그레이션 중에는 스킴이 다른 읽기와 변조된 암호문을 구분할 수 없으며, 둘 다 MAC 실패로 나타납니다. 마이그레이션하는 동안 읽기마다 사용한 스킴을 로깅하고, 이런 실패는 손상을 의심하기 전에 스킴 불일치로 먼저 의심하세요. 두 매니저를 같은 마스터 키로 만들고 읽은 뒤 쓰세요:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // read legacy data
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // write new data
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                       // 1. decrypt with v1
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                            // 2. re-encrypt with v2
+```
+
+저장된 데이터(세션과 토큰 포함)를 다시 암호화하고, v1 암호문이 더 이상 남지 않으면 v1 매니저를 은퇴시키세요. 마스터 키 자체는 바뀌지 않습니다. 유도 스킴 전환은 키 로테이션이 아닙니다.
+
+**페이로드 접두사와는 무관.** `v1 | IV | MAC | ciphertext` 페이로드 구조의 `v1`은 *암호문 포맷* 버전이며 이 유도 스킴이 아닙니다 — v2에서도 접두사는 `v1`로 유지되고 기존 블롭은 각자의 값을 유지합니다. 이름을 바꾸지 마세요.
 
 ---
 

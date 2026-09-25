@@ -8,8 +8,12 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption;
 
+use Erikwang2013\Encryption\Contract\PasswordBasedKdfInterface;
+
 /**
  * 基于口令的 KDF（如 PBKDF2）注册表。
+ *
+ * @extends AbstractRegistry<PasswordBasedKdfInterface>
  */
 final class PasswordBasedKdfRegistry extends AbstractRegistry
 {

@@ -1,0 +1,17 @@
+# PHPStan 配置：CI 在 PHP 版本矩阵之外单独跑一次，
+# 本地等价命令：vendor/bin/phpstan analyse
+parameters:
+    # 本库声明支持 PHP ^8.0，按最低版本检查，避免把 8.1+ 的推断语义带进结果。
+    phpVersion: 80000
+    # 7/8/9 三档在本库产出同一批问题，故取其中最高档；10 档多出的 12 条
+    # 全是同一处根因（注册表返回 object 导致 mixed）的重复，不另设基线。
+    level: 9
+    paths:
+        - src
+        - examples
+    # 基线条目在其对应问题被修复后不再匹配；修复进度由人安排，
+    # 不让 CI 因为“问题消失了”变红（重新生成：--generate-baseline）。
+    reportUnmatchedIgnoredErrors: false
+
+includes:
+    - phpstan-baseline.neon

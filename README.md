@@ -339,7 +339,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-Master-key factory: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` derives per-algorithm subkeys and registers **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128**, and **sodium-xchacha20** (if ext-sodium is available) at once.
+Master-key factory: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` derives per-algorithm subkeys and registers **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128**, and **sodium-xchacha20** (if ext-sodium is available) at once. Derivation defaults to `'v1'`; pass `'v2'` as the third argument for the corrected HMAC argument order (the two are mutually unreadable — see §8).
 
 ### 2. Asymmetric encryption
 
@@ -441,6 +441,34 @@ SM1, SM7, SM9: `UnavailableNationalAlgorithms::sm1()` and similar throw `Unsuppo
 ### 7. Exceptions
 
 Failures throw `Erikwang2013\Encryption\Exception\EncryptionException`; unavailable national algorithms use `UnsupportedNationalAlgorithmException`. Catch and log in application code; do not leak details to clients.
+
+### 8. Key-derivation scheme v1 → v2 (opt-in migration)
+
+**What was wrong.** When deriving the per-algorithm subkeys and the MAC keys of `aes-256-cbc-hmac`, `sm4-cbc` and `zuc-128`, `hash_hmac($algo, $data, $key)` was called with the constant usage label as the HMAC **key** and the secret material as the **message** — the two arguments were swapped. The secret must be the HMAC key.
+
+**Why nothing is exploitable.** The usage label is a public constant and the secret still feeds the HMAC; an attacker without the master key (or the cipher key) derives nothing and forges nothing. Only the argument order was wrong, not the strength of the derivation.
+
+**How to switch.** Pass `'v2'` as the third argument. Omitting it keeps today's behaviour byte for byte, so every existing call site is unchanged:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // default: unchanged behaviour
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // corrected HMAC order
+```
+
+Each MAC-based encryptor takes the same switch as a trailing optional argument — `new Sm4CbcEncryptor($key16, macDerivation: 'v2')`. An unknown scheme name throws `EncryptionException` instead of silently falling back to v1.
+
+**Migration.** v1 and v2 derive *different* subkeys and MAC keys, so they are not interchangeable: a v2 manager cannot decrypt v1 ciphertext and a v1 manager cannot decrypt v2 ciphertext (MAC / authentication failure). There is no on-wire marker for the scheme — both write the same `v1` payload prefix — so during a migration a wrong-scheme read is indistinguishable from a tampered ciphertext: both surface as a MAC failure. Log the scheme used for each read while you migrate, and expect such failures to be scheme mismatches before you suspect corruption. Build both managers from the same master key and read-then-write:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // read legacy data
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // write new data
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                       // 1. decrypt with v1
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                            // 2. re-encrypt with v2
+```
+
+Re-encrypt stored data (sessions and tokens included) and retire the v1 manager once no v1 ciphertext remains. The master key itself does not change: switching the derivation scheme is not a key rotation.
+
+**Unrelated to the payload prefix.** The `v1` in the `v1 | IV | MAC | ciphertext` payload layout is a *ciphertext format* version, not this derivation scheme — the prefix stays `v1` under v2, and old blobs keep theirs. Do not rename it.
 
 ---
 

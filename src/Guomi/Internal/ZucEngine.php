@@ -115,6 +115,100 @@ final class ZucEngine
         return ($w ^ $this->x3) & 0xFFFFFFFF;
     }
 
+    /**
+     * 批量生成 $length 字节密钥流：整字生成，末字多余字节截断丢弃，
+     * 与连续调用 nextKey()（首字仍按规范丢弃）再按 4 字节打包截断的结果逐字节一致。
+     * 与 nextKey() 的差别仅在调用与分配方式：step() 的工作内联进单个循环，
+     * LFSR 以局部数组就地更新、整批结尾一次性回写，避免每字一次写时复制。
+     * 密码学逻辑（LFSR 反馈、S 盒、位重组、首字丢弃）与 nextKey() 完全相同。
+     */
+    public function keystream(int $length): string
+    {
+        if (!$this->initialized) {
+            throw new \RuntimeException('ZUC not initialized.');
+        }
+        if ($length < 0) {
+            throw new \InvalidArgumentException('ZUC keystream length must not be negative.');
+        }
+        if ($length === 0) {
+            return '';
+        }
+        // 本地持有全部状态，整批只在结尾回写一次
+        $s = $this->lfsr;
+        $h = $this->h;
+        $r1 = $this->r1;
+        $r2 = $this->r2;
+        $x3 = $this->x3;
+        $drop = $this->isFirst ? 1 : 0; // 首字丢弃
+        $this->isFirst = false;
+        $words = intdiv($length + 3, 4);
+        $S0 = self::S0; // 提到局部：类常量数组每次下标访问都要按名字查常量表
+        $S1 = self::S1;
+        $out = '';
+        $chunk = []; // 攒够 512 个字再一次 pack：字符串 .= 每次都要重分配到精确长度，逐字拼接并不便宜
+        $cn = 0;
+        for ($i = 0, $n = $words + $drop; $i < $n; $i++) {
+            $i0 = $h; $i2 = ($h + 2) & 15; $i4 = ($h + 4) & 15;
+            $i5 = ($h + 5) & 15; $i7 = ($h + 7) & 15; $i9 = ($h + 9) & 15; $i10 = ($h + 10) & 15;
+            $i11 = ($h + 11) & 15; $i13 = ($h + 13) & 15; $i14 = ($h + 14) & 15; $i15 = ($h + 15) & 15;
+            // bitReorg（cell 恒 <= 0x7FFFFFFF，外层 & 0xFFFFFFFF 恒等，已省略）
+            $x0 = (($s[$i15] & 0x7FFF8000) << 1) | ($s[$i14] & 0xFFFF);
+            $x1 = (($s[$i11] & 0xFFFF) << 16) | (($s[$i9] >> 15) & 0xFFFF);
+            $x2 = (($s[$i7] & 0xFFFF) << 16) | (($s[$i5] >> 15) & 0xFFFF);
+            $x3 = (($s[$i2] & 0xFFFF) << 16) | (($s[$i0] >> 15) & 0xFFFF);
+            // fDash：l1/l2 内联为旋转+异或链，一次掩码
+            $w = (($x0 ^ $r1) + $r2) & 0xFFFFFFFF;
+            $w1 = ($r1 + $x1) & 0xFFFFFFFF;
+            $w2 = ($r2 ^ $x2) & 0xFFFFFFFF;
+            $u = (($w1 << 16) | ($w2 >> 16)) & 0xFFFFFFFF;
+            $v = (($w2 << 16) | ($w1 >> 16)) & 0xFFFFFFFF;
+            $l1 = ($u ^ (($u << 2) | ($u >> 30)) ^ (($u << 10) | ($u >> 22)) ^ (($u << 18) | ($u >> 14)) ^ (($u << 24) | ($u >> 8))) & 0xFFFFFFFF;
+            $l2 = ($v ^ (($v << 8) | ($v >> 24)) ^ (($v << 14) | ($v >> 18)) ^ (($v << 22) | ($v >> 10)) ^ (($v << 30) | ($v >> 2))) & 0xFFFFFFFF;
+            $r1 = ($S0[$l1 >> 24] << 24) | ($S1[($l1 >> 16) & 0xff] << 16) | ($S0[($l1 >> 8) & 0xff] << 8) | $S1[$l1 & 0xff];
+            $r2 = ($S0[$l2 >> 24] << 24) | ($S1[($l2 >> 16) & 0xff] << 16) | ($S0[($l2 >> 8) & 0xff] << 8) | $S1[$l2 & 0xff];
+            // LFSR 反馈 addM 链内联；旋转项先 & 0x7FFFFFFF（mulByPow2 语义），每步折叠进位
+            $t0 = $s[$i0];
+            $t = (($t0 << 8) | ($t0 >> 23)) & 0x7FFFFFFF;
+            $c = $t0 + $t;
+            $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+            $t = (($s[$i4] << 20) | ($s[$i4] >> 11)) & 0x7FFFFFFF;
+            $c = $f + $t;
+            $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+            $t = (($s[$i10] << 21) | ($s[$i10] >> 10)) & 0x7FFFFFFF;
+            $c = $f + $t;
+            $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+            $t = (($s[$i13] << 17) | ($s[$i13] >> 14)) & 0x7FFFFFFF;
+            $c = $f + $t;
+            $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+            $t = (($s[$i15] << 15) | ($s[$i15] >> 16)) & 0x7FFFFFFF;
+            $c = $f + $t;
+            $f = (($c & 0x7FFFFFFF) + ($c >> 31)) & 0x7FFFFFFF;
+            $s[$h] = $f & 0x7FFFFFFF; // 新 cell15 落在旧 cell0 位置
+            $h = ($h + 1) & 15;
+            if ($i >= $drop) {
+                $chunk[] = $w ^ $x3;
+                if (++$cn === 512) {
+                    $out .= pack('N*', ...$chunk);
+                    $chunk = [];
+                    $cn = 0;
+                }
+            }
+        }
+        if ($chunk !== []) {
+            $out .= pack('N*', ...$chunk);
+        }
+        if (strlen($out) !== $length) {
+            $out = substr($out, 0, $length); // 末字多余字节丢弃
+        }
+        $this->lfsr = array_values($s); // 回写为属性声明的 list<int>（下标恒为 0..15，等价）
+        $this->h = $h;
+        $this->r1 = $r1;
+        $this->r2 = $r2;
+        $this->x3 = $x3;
+
+        return $out;
+    }
+
     /** 一个完整 ZUC 周期（bitReorg + fDash + LFSR 更新）；$init: 反馈加 (w>>1)。 */
     private function step(bool $init): int
     {

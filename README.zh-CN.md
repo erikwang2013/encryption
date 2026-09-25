@@ -337,7 +337,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('数据');
 ```
 
-主密钥工厂：`EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` 从主密钥派生各算法独立子密钥，一次性注册 **aes-256-gcm**、**aes-256-cbc-hmac**、**sm4-cbc**、**zuc-128**，以及 **sodium-xchacha20**（需 ext-sodium 可用）。
+主密钥工厂：`EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` 从主密钥派生各算法独立子密钥，一次性注册 **aes-256-gcm**、**aes-256-cbc-hmac**、**sm4-cbc**、**zuc-128**，以及 **sodium-xchacha20**（需 ext-sodium 可用）。派生方案默认 `'v1'`；第三个参数传 `'v2'` 可切换到修正 HMAC 参数顺序的方案（两者不可互解，迁移见第 8 节）。
 
 ### 2. 非对称加密
 
@@ -439,6 +439,34 @@ SM1、SM7、SM9：`UnavailableNationalAlgorithms::sm1()` 等会抛出 `Unsupport
 ### 7. 异常
 
 失败时抛出 `Erikwang2013\Encryption\Exception\EncryptionException`；国密不可用算法为 `UnsupportedNationalAlgorithmException`。业务层应捕获并记录，勿向前端泄露细节。
+
+### 8. 子密钥派生方案 v1 → v2（可选迁移）
+
+**原来错在哪**：`EncryptionManagerFactory` 派生各算法子密钥、以及 `aes-256-cbc-hmac`／`sm4-cbc`／`zuc-128` 派生 MAC 密钥时，`hash_hmac($algo, $data, $key)` 把固定的用途标签当成了 HMAC 的 **key**，把主密钥／密文密钥当成了 **message**——两个参数写反了。密钥必须作为 HMAC 的 key。
+
+**为什么不可被利用**：用途标签是公开常量，秘密材料仍然参与 HMAC 运算；没有主密钥（或密文密钥）的攻击者既派生不出子密钥也伪造不了 MAC。错的只是参数顺序，不是强度。
+
+**切换方式**：第三个参数传 `'v2'` 即启用修正顺序；不传则与历史行为逐字节一致，所有既有调用点无需改动：
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                        // 默认：行为不变
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');   // 修正 HMAC 参数顺序
+```
+
+单个加密器同样支持末尾可选参数 `macDerivation: 'v2'`：`new Sm4CbcEncryptor($key16, macDerivation: 'v2')`。未知方案名会抛 `EncryptionException`，不会静默按 v1 处理。
+
+**迁移步骤**：v1 与 v2 派生出**不同**的子密钥与 MAC 密钥，二者不可互换——v2 管理器解不开 v1 密文，v1 管理器也解不开 v2 密文（MAC／认证失败）。两种方案的密文在载荷上无法区分（前缀都是 `v1`），因此迁移期间「用错方案去读」与「密文被篡改」表现完全一样，都是 MAC 校验失败：迁移时请记录每次读取所用方案，遇到这类失败先排查方案不匹配，再怀疑数据损坏。用同一把主密钥同时构造两个管理器，先读后写：
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                          // 读历史数据
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');     // 写新数据
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                          // 1. v1 解密
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                               // 2. v2 重新加密
+```
+
+逐步重写存量数据（含会话、令牌等），确认不再有任何 v1 密文后再下线 v1 管理器。主密钥本身不用换：切换派生方案不等于轮换密钥。
+
+**与载荷前缀无关**：载荷格式 `v1 | IV | MAC | 密文` 里的 `v1` 是**密文格式版本**，与本文的派生方案无关；v2 派生方案下前缀仍是 `v1`，历史数据的前缀也不变，请勿改名。
 
 ---
 

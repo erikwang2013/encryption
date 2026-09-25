@@ -8,16 +8,29 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption;
 
+use Erikwang2013\Encryption\Contract\AsymmetricCipherInterface;
+use Erikwang2013\Encryption\Contract\HasherInterface;
+use Erikwang2013\Encryption\Contract\KeyDerivationInterface;
+use Erikwang2013\Encryption\Contract\PasswordBasedKdfInterface;
+use Erikwang2013\Encryption\Contract\SymmetricCipherInterface;
 use Erikwang2013\Encryption\Exception\EncryptionException;
 
 /**
  * 注册表公共基类：按标识（getIdentifier()）注册并解析实现对象。
+ *
+ * 泛型参数 T 是注册表承载的实现类型，由子类用 @extends 指定；
+ * 这样 get() 返回的是契约接口而非 object，调用方无需再断言类型。
+ *
+ * @template T of SymmetricCipherInterface|AsymmetricCipherInterface|HasherInterface|KeyDerivationInterface|PasswordBasedKdfInterface
  */
 abstract class AbstractRegistry
 {
-    /** @var array<string, object> */
+    /** @var array<string, T> */
     private array $items = [];
 
+    /**
+     * @param T ...$items
+     */
     public function __construct(object ...$items)
     {
         foreach ($items as $item) {
@@ -25,6 +38,9 @@ abstract class AbstractRegistry
         }
     }
 
+    /**
+     * @param T $item
+     */
     public function register(object $item): static
     {
         $id = $item->getIdentifier();
@@ -44,6 +60,9 @@ abstract class AbstractRegistry
         return isset($this->items[$identifier]);
     }
 
+    /**
+     * @return T
+     */
     public function get(string $identifier): object
     {
         if (!isset($this->items[$identifier])) {

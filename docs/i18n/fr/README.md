@@ -339,7 +339,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-Factory de clé maîtresse : `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` dérive une sous-clé par algorithme et enregistre d'un coup **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128** et **sodium-xchacha20** (si ext-sodium est disponible).
+Factory de clé maîtresse : `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` dérive une sous-clé par algorithme et enregistre d'un coup **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128** et **sodium-xchacha20** (si ext-sodium est disponible). La dérivation utilise `'v1'` par défaut ; passez `'v2'` en troisième argument pour l'ordre d'arguments HMAC corrigé (les deux ne peuvent pas se lire mutuellement — voir §8).
 
 ### 2. Chiffrement asymétrique
 
@@ -441,6 +441,34 @@ SM1, SM7, SM9 : `UnavailableNationalAlgorithms::sm1()` et les méthodes équival
 ### 7. Exceptions
 
 Les défaillances lèvent `Erikwang2013\Encryption\Exception\EncryptionException` ; les algorithmes nationaux indisponibles utilisent `UnsupportedNationalAlgorithmException`. Interceptez et journalisez ces erreurs dans le code applicatif ; ne divulguez aucun détail aux clients.
+
+### 8. Schéma de dérivation de clés v1 → v2 (migration facultative)
+
+**Ce qui n'allait pas.** Lors de la dérivation des sous-clés par algorithme et des clés MAC de `aes-256-cbc-hmac`, `sm4-cbc` et `zuc-128`, `hash_hmac($algo, $data, $key)` était appelée avec le libellé d'usage constant comme **clé** HMAC et le matériau secret comme **message** — les deux arguments étaient inversés. C'est le secret qui doit servir de clé HMAC.
+
+**Pourquoi rien n'est exploitable.** Le libellé d'usage est une constante publique et le secret alimente toujours le HMAC ; un attaquant sans la clé maîtresse (ni la clé de chiffrement) ne dérive rien et ne falsifie rien. Seul l'ordre des arguments était erroné, pas la solidité de la dérivation.
+
+**Comment basculer.** Passez `'v2'` en troisième argument. L'omettre conserve le comportement actuel octet pour octet, donc aucun site d'appel existant ne change :
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // default: unchanged behaviour
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // corrected HMAC order
+```
+
+Chaque chiffreur basé sur MAC accepte le même commutateur en dernier argument optionnel — `new Sm4CbcEncryptor($key16, macDerivation: 'v2')`. Un nom de schéma inconnu lève `EncryptionException` au lieu de retomber silencieusement sur v1.
+
+**Migration.** v1 et v2 dérivent des sous-clés et des clés MAC *différentes* : ils ne sont donc pas interchangeables — un manager v2 ne peut pas déchiffrer un texte chiffré v1, et un manager v1 ne peut pas déchiffrer un texte chiffré v2 (échec du MAC / de l'authentification). Le schéma n'a aucun marqueur dans les données transmises — les deux écrivent le même préfixe de charge utile `v1` — aussi, pendant une migration, une lecture avec le mauvais schéma est indiscernable d'un texte chiffré altéré : les deux se manifestent par un échec du MAC. Journalisez le schéma utilisé pour chaque lecture pendant la migration, et attendez-vous à ce que ces échecs soient des incompatibilités de schéma avant de suspecter une corruption. Construisez les deux managers à partir de la même clé maîtresse et procédez en lecture puis écriture :
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // read legacy data
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // write new data
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                       // 1. decrypt with v1
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                            // 2. re-encrypt with v2
+```
+
+Rechiffrez les données stockées (sessions et jetons compris) et mettez le manager v1 au repos dès qu'il ne reste plus de texte chiffré v1. La clé maîtresse elle-même ne change pas : changer de schéma de dérivation n'est pas une rotation de clé.
+
+**Sans rapport avec le préfixe de charge utile.** Le `v1` de la structure de charge utile `v1 | IV | MAC | ciphertext` est une version du *format de texte chiffré*, pas de ce schéma de dérivation — le préfixe reste `v1` en v2, et les anciens blobs conservent le leur. Ne le renommez pas.
 
 ---
 

@@ -38,10 +38,17 @@ final class Sm4CbcEncryptor implements EncryptorInterface
     public function __construct(
         private string $key,
         private string $identifier = 'sm4-cbc',
+        private string $macDerivation = 'v1',
     ) {
         if (strlen($this->key) !== 16) {
             throw new EncryptionException('SM4 key must be exactly 16 bytes.');
         }
+        $this->assertMacKeyScheme($this->macDerivation);
+    }
+
+    protected function macKeyScheme(): string
+    {
+        return $this->macDerivation;
     }
 
     public function getIdentifier(): string

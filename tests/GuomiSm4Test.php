@@ -127,4 +127,26 @@ final class GuomiSm4Test extends TestCase
         self::assertSame('sm4-cbc', (new Sm4CbcEncryptor(random_bytes(16)))->getIdentifier());
         self::assertSame('sm4-cbc-v2', (new Sm4CbcEncryptor(random_bytes(16), 'sm4-cbc-v2'))->getIdentifier());
     }
+
+    public function testV2MacDerivationRoundTripsAndV1CannotReadIt(): void
+    {
+        $key = random_bytes(Sm4CbcEncryptor::KEY_LEN);
+        $v2 = new Sm4CbcEncryptor($key, macDerivation: 'v2');
+        foreach (['中文 v2 迁移', random_bytes(300)] as $plain) {
+            self::assertSame($plain, $v2->decrypt($v2->encrypt($plain)));
+        }
+        try {
+            (new Sm4CbcEncryptor($key))->decrypt($v2->encrypt('payload'));
+            self::fail('A v1 SM4 encryptor must not decrypt v2 ciphertext: the MAC keys differ.');
+        } catch (EncryptionException $e) {
+            self::assertSame('SM4 MAC verification failed.', $e->getMessage());
+        }
+    }
+
+    public function testUnknownMacKeySchemeThrows(): void
+    {
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessage('Unknown SM4 MAC key derivation scheme "v3" (expected "v1" or "v2").');
+        new Sm4CbcEncryptor(random_bytes(Sm4CbcEncryptor::KEY_LEN), macDerivation: 'v3');
+    }
 }

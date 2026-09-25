@@ -8,8 +8,12 @@ declare(strict_types=1);
 
 namespace Erikwang2013\Encryption;
 
+use Erikwang2013\Encryption\Contract\HasherInterface;
+
 /**
  * 杂凑算法注册表。
+ *
+ * @extends AbstractRegistry<HasherInterface>
  */
 final class HasherRegistry extends AbstractRegistry
 {

@@ -130,6 +130,33 @@ In coroutine mode, if keys come from remote config, cache the parsed value.
 
 Register `EncryptionManager` on the global `support` container in `config/plugin.php`, a custom `bootstrap`, or `support/bootstrap.php` if you use that pattern, or construct with `EncryptionManagerFactory::fromMasterKey(...)` inside service classes. webman does not mandate a specific container—**follow your project’s conventions**.
 
+**Vanilla PHP (no framework)**
+
+There is no container to hook into: `composer require` at the project root, then build the manager once and reuse it. A runnable version of this file lives in [`examples/plain-php/`](../../../examples/plain-php) — `php examples/plain-php/demo.php` prints a full encrypt → store → read → decrypt → tamper-detection cycle.
+
+```php
+// bootstrap.php — require this once from your front controller
+use Erikwang2013\Encryption\EncryptionManagerFactory;
+
+$raw = getenv('ENCRYPTION_MASTER_KEY');            // base64 of 32 random bytes
+$key = is_string($raw) ? base64_decode($raw, true) : false;
+if ($key === false || strlen($key) !== 32) {
+    throw new RuntimeException('ENCRYPTION_MASTER_KEY must be base64 of 32 bytes.');
+}
+$manager = EncryptionManagerFactory::fromMasterKey($key, 'aes-256-gcm');
+
+// anywhere else in the project
+$stored = base64_encode($manager->encrypt($phone));   // store as TEXT
+$phone  = $manager->decrypt(base64_decode($stored));  // read it back
+```
+
+```bash
+# generate the key once, keep it in the server environment — never in the code
+export ENCRYPTION_MASTER_KEY="$(php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;')"
+```
+
+Notes for plain PHP projects: the factory is the expensive part (it derives every subkey and registers every encryptor), so call it once per process and reuse the instance rather than per query; keep the key in the process environment or your own secret store, and back it up — losing it means losing the data; catch `EncryptionException` around reads and log server-side instead of echoing the reason to the client; ciphertext is binary, so store `base64_encode(...)` in a `TEXT` column or the raw blob in a `BLOB` column.
+
 ### Unrelated to this library
 
 - Framework upgrades (e.g. Laravel 10 → 11) usually **do not** require API changes here. If Composer reports a PHP version conflict, follow this package’s `php` constraint in `composer.json`.
@@ -214,6 +241,8 @@ Source: [`docs/lifecycle.svg`](../../lifecycle.svg)
 | Extension | `ext-sodium` (optional, for `sodium-xchacha20`) |
 | Extension | `ext-gmp` (optional, **SM2** encryption/decryption and key generation) |
 | Composer | `pohoc/crypto-sm` (dependency; SM2/SM3/SM4 wrappers) |
+
+SM3 and SM4-CBC use OpenSSL's native implementations whenever the linked OpenSSL provides `sm3` / `sm4-cbc` (OpenSSL 1.1.1+). Otherwise they fall back to the pure-PHP implementations in `pohoc/crypto-sm` — byte-for-byte identical output, but far slower: the SM3 fallback is quadratic in memory (~490 MB and ~85 s for a single 1 MiB digest, versus ~4 MB at ~60 MB/s natively). CI runs the suite on both paths.
 
 ## Installation
 
@@ -310,7 +339,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-Master-key factory: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` derives per-algorithm subkeys and registers **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128**, and **sodium-xchacha20** (if ext-sodium is available) at once.
+Master-key factory: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` derives per-algorithm subkeys and registers **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128**, and **sodium-xchacha20** (if ext-sodium is available) at once. Derivation defaults to `'v1'`; pass `'v2'` as the third argument for the corrected HMAC argument order (the two are mutually unreadable — see §8).
 
 ### 2. Asymmetric encryption
 
@@ -413,6 +442,34 @@ SM1, SM7, SM9: `UnavailableNationalAlgorithms::sm1()` and similar throw `Unsuppo
 
 Failures throw `Erikwang2013\Encryption\Exception\EncryptionException`; unavailable national algorithms use `UnsupportedNationalAlgorithmException`. Catch and log in application code; do not leak details to clients.
 
+### 8. Key-derivation scheme v1 → v2 (opt-in migration)
+
+**What was wrong.** When deriving the per-algorithm subkeys and the MAC keys of `aes-256-cbc-hmac`, `sm4-cbc` and `zuc-128`, `hash_hmac($algo, $data, $key)` was called with the constant usage label as the HMAC **key** and the secret material as the **message** — the two arguments were swapped. The secret must be the HMAC key.
+
+**Why nothing is exploitable.** The usage label is a public constant and the secret still feeds the HMAC; an attacker without the master key (or the cipher key) derives nothing and forges nothing. Only the argument order was wrong, not the strength of the derivation.
+
+**How to switch.** Pass `'v2'` as the third argument. Omitting it keeps today's behaviour byte for byte, so every existing call site is unchanged:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // default: unchanged behaviour
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // corrected HMAC order
+```
+
+Each MAC-based encryptor takes the same switch as a trailing optional argument — `new Sm4CbcEncryptor($key16, macDerivation: 'v2')`. An unknown scheme name throws `EncryptionException` instead of silently falling back to v1.
+
+**Migration.** v1 and v2 derive *different* subkeys and MAC keys, so they are not interchangeable: a v2 manager cannot decrypt v1 ciphertext and a v1 manager cannot decrypt v2 ciphertext (MAC / authentication failure). There is no on-wire marker for the scheme — both write the same `v1` payload prefix — so during a migration a wrong-scheme read is indistinguishable from a tampered ciphertext: both surface as a MAC failure. Log the scheme used for each read while you migrate, and expect such failures to be scheme mismatches before you suspect corruption. Build both managers from the same master key and read-then-write:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // read legacy data
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // write new data
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                       // 1. decrypt with v1
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                            // 2. re-encrypt with v2
+```
+
+Re-encrypt stored data (sessions and tokens included) and retire the v1 manager once no v1 ciphertext remains. The master key itself does not change: switching the derivation scheme is not a key rotation.
+
+**Unrelated to the payload prefix.** The `v1` in the `v1 | IV | MAC | ciphertext` payload layout is a *ciphertext format* version, not this derivation scheme — the prefix stays `v1` under v2, and old blobs keep theirs. Do not rename it.
+
 ---
 
 ## Project structure
@@ -449,9 +506,15 @@ encryption/
 │   ├── architecture-design.svg      embedded in “Architecture overview”
 │   ├── functional-design.svg        embedded in “Functional design”
 │   ├── lifecycle.svg                embedded in “Request lifecycle”
+│   ├── i18n/                        this README in 12 more languages, each with
+│   │                                localised copies of the diagrams (+ labels/*.json)
 │   └── *.md                         archived review / test reports
+├── examples/plain-php/              runnable vanilla-PHP integration (bootstrap + demo)
+├── scripts/i18n-build-svg.php       builds docs/i18n/<lang>/*.svg from the label dictionaries
+├── .github/workflows/tests.yml      phpunit on PHP 8.0–8.4 in CI (gmp + sodium)
 ├── composer.json                    psr-4 autoload, PHP ^8.0, phpunit dev dependency
 ├── phpunit.xml.dist
+├── SECURITY.md                      vulnerability disclosure policy
 └── README.md  README.zh-CN.md
 ```
 
@@ -499,6 +562,7 @@ Laravel’s API targets framework serialization and cookies; this library target
 2. **Algorithms**: prefer **AES-256-GCM** or **Sodium** for new systems; use **SM3/SM4/ZUC/SM2** where required; **HKDF** for subkey expansion; for **PBKDF2** password stretching, use sufficient iterations and random salt.
 3. **Transport**: still use TLS in transit; this library handles field-level crypto and digests.
 4. **Migration**: track `identifier` per algorithm version so old data can be decrypted and re-encrypted.
+5. **Found a vulnerability?** Report it privately — see [`SECURITY.md`](../../../SECURITY.md).
 
 ---
 

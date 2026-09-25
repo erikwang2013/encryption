@@ -339,7 +339,7 @@ $manager = new EncryptionManager($registry, 'aes-256-gcm');
 $blob = $manager->encrypt('data');
 ```
 
-Factoría de clave maestra: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` deriva subclaves por algoritmo y registra **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128** y **sodium-xchacha20** (si ext-sodium está disponible) de una sola vez.
+Factoría de clave maestra: `EncryptionManagerFactory::fromMasterKey($masterKey32, 'aes-256-gcm')` deriva subclaves por algoritmo y registra **aes-256-gcm**, **aes-256-cbc-hmac**, **sm4-cbc**, **zuc-128** y **sodium-xchacha20** (si ext-sodium está disponible) de una sola vez. La derivación usa `'v1'` por defecto; pasa `'v2'` como tercer argumento para el orden de argumentos HMAC corregido (ambos son mutuamente ilegibles: consulta el §8).
 
 ### 2. Cifrado asimétrico
 
@@ -441,6 +441,34 @@ SM1, SM7, SM9: `UnavailableNationalAlgorithms::sm1()` y similares lanzan `Unsupp
 ### 7. Excepciones
 
 Los fallos lanzan `Erikwang2013\Encryption\Exception\EncryptionException`; los algoritmos nacionales no disponibles usan `UnsupportedNationalAlgorithmException`. Captúralas y regístralas en el código de la aplicación; no filtres detalles al cliente.
+
+### 8. Esquema de derivación de claves v1 → v2 (migración opcional)
+
+**Qué estaba mal.** Al derivar las subclaves por algoritmo y las claves MAC de `aes-256-cbc-hmac`, `sm4-cbc` y `zuc-128`, se llamaba a `hash_hmac($algo, $data, $key)` con la etiqueta de uso constante como **clave** del HMAC y el material secreto como **mensaje**: los dos argumentos estaban intercambiados. La clave del HMAC debe ser el secreto.
+
+**Por qué no es explotable.** La etiqueta de uso es una constante pública y el secreto sigue alimentando el HMAC; un atacante sin la clave maestra (o sin la clave del cifrado) no deriva nada ni falsifica nada. Solo estaba mal el orden de los argumentos, no la fortaleza de la derivación.
+
+**Cómo cambiar.** Pasa `'v2'` como tercer argumento. Omitirlo mantiene el comportamiento actual byte a byte, así que ninguna llamada existente cambia:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // default: unchanged behaviour
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // corrected HMAC order
+```
+
+Cada cifrador basado en MAC acepta el mismo conmutador como último argumento opcional: `new Sm4CbcEncryptor($key16, macDerivation: 'v2')`. Un nombre de esquema desconocido lanza `EncryptionException` en lugar de recurrir en silencio a v1.
+
+**Migración.** v1 y v2 derivan subclaves y claves MAC *distintas*, así que no son intercambiables: un gestor v2 no puede descifrar texto cifrado v1 y un gestor v1 no puede descifrar texto cifrado v2 (fallo de MAC / autenticación). No hay ningún marcador del esquema en los datos transmitidos —ambos escriben el mismo prefijo de carga útil `v1`—, por lo que durante una migración una lectura con el esquema equivocado es indistinguible de un texto cifrado manipulado: ambas se manifiestan como un fallo de MAC. Registra en el log el esquema usado en cada lectura mientras migras y, ante tales fallos, sospecha primero de un desajuste de esquema antes que de una corrupción. Construye ambos gestores con la misma clave maestra y lee primero, escribe después:
+
+```php
+$v1 = EncryptionManagerFactory::fromMasterKey($master);                       // read legacy data
+$v2 = EncryptionManagerFactory::fromMasterKey($master, 'aes-256-gcm', 'v2');  // write new data
+$plain = $v1->decrypt($legacyBlob, 'aes-256-cbc-hmac');                       // 1. decrypt with v1
+$blob  = $v2->encrypt($plain, 'aes-256-cbc-hmac');                            // 2. re-encrypt with v2
+```
+
+Vuelve a cifrar los datos almacenados (incluidas sesiones y tokens) y retira el gestor v1 cuando ya no quede texto cifrado v1. La clave maestra en sí no cambia: cambiar el esquema de derivación no es una rotación de claves.
+
+**Sin relación con el prefijo de la carga útil.** El `v1` de la estructura de carga útil `v1 | IV | MAC | ciphertext` es una versión del *formato del texto cifrado*, no de este esquema de derivación: el prefijo sigue siendo `v1` con v2, y los blobs antiguos conservan el suyo. No lo renombres.
 
 ---
 

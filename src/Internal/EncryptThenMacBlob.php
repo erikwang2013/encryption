@@ -12,7 +12,8 @@ use Erikwang2013\Encryption\Exception\EncryptionException;
 
 /**
  * 加密后计算 HMAC-SHA256（encrypt-then-mac）并打包/校验载荷的公共逻辑。
- * 使用方需提供 self::PREFIX、self::IV_LEN、self::MAC_LEN、private $key 与 label()。
+ * 使用方需提供 self::PREFIX、self::IV_LEN、self::MAC_LEN、private $key 与 label()；
+ * 可选覆写 macKeyScheme() 切换到修正后的 v2 MAC 密钥派生（默认 'v1' 不变）。
  */
 trait EncryptThenMacBlob
 {
@@ -21,7 +22,35 @@ trait EncryptThenMacBlob
 
     private function macKey(): string
     {
-        return $this->cachedMacKey ??= hash_hmac('sha256', $this->key, 'dgn:enc:hmac', true);
+        $label = 'dgn:enc:hmac';
+
+        // v1 把用途标签当 HMAC key（历史顺序），v2 修正为密文密钥作 HMAC key；两者结果不同，不可互解。
+        return $this->cachedMacKey ??= $this->macKeyScheme() === 'v2'
+            ? hash_hmac('sha256', $label, $this->key, true)
+            : hash_hmac('sha256', $this->key, $label, true);
+    }
+
+    /**
+     * MAC 密钥派生方案：'v1'（默认）沿用历史顺序，'v2' 使用修正顺序（密钥作 HMAC key）。
+     * 使用方覆写本方法返回自己的方案；默认 'v1' 使既有构造调用与历史密文保持字节级不变。
+     */
+    protected function macKeyScheme(): string
+    {
+        return 'v1';
+    }
+
+    /**
+     * 校验 MAC 密钥派生方案，供使用方构造函数调用：拼写错误不能静默退回 v1（或误升 v2）。
+     */
+    protected function assertMacKeyScheme(string $scheme): void
+    {
+        if ($scheme !== 'v1' && $scheme !== 'v2') {
+            throw new EncryptionException(sprintf(
+                'Unknown %s MAC key derivation scheme "%s" (expected "v1" or "v2").',
+                $this->label(),
+                $scheme
+            ));
+        }
     }
 
     private function packWithMac(string $iv, string $ct): string
